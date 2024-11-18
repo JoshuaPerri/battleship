@@ -1,5 +1,33 @@
 .Table {
+  max-width: 900px;
+  max-height: 900px;
+  height: 100%;
+  width: 100%;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(3, 1fr);
+  grid-template-columns: repeat(10, 1fr);
+  grid-template-rows: repeat(10, 1fr);
+}
+
+
+.Cell {
+  background-color: lightgray;
+  margin: 1px;
+  border: 0;
+  transition: linear 0.1s;
+}
+
+.Cell:hover {
+  background-color: grey;
+}
+
+.black {
+  background-color: black;
+}
+
+#container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100vw;
+  height: 100vh;
 }

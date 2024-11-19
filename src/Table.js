@@ -1,17 +1,21 @@
 import './Table.css';
 
+function toggleClass(element, className) {
+  element.classList.contains(className) ? element.classList.remove(className) : element.classList.add(className)
+}
+
 function Cell(props) {
   const click = (a, b) => {
-    let button = b.target;
-    if (button.classList.contains("black")) {
-      button.classList.remove("black")
-    } else {
-      button.classList.add("black")
-    }
+    let button = b.currentTarget
+    // Search children of button to get token
+    let token = Array.from(button.children).filter((child) => child.classList.contains("Token"))[0];
+    toggleClass(token, "hidden")
   }
 
   return (
-    <button className="Cell" onClick={(event) => click(props.num, event)}></button>
+    <button className="Cell" onClick={(event) => click(props.num, event)}>
+      <div className='Token hidden'></div>
+    </button>
   )
 }
 

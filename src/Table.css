@@ -12,12 +12,26 @@
 .Cell {
   background-color: lightgray;
   margin: 1px;
+  padding: 0;
   border: 0;
   transition: linear 0.1s;
 }
 
 .Cell:hover {
   background-color: grey;
+}
+
+.Token {
+  background-color: red;
+  width: calc(100% - 20px);
+  height: calc(100% - 20px);
+  margin: 10px;
+  border-radius: 100%;
+  border: 2px solid maroon;
+}
+
+.hidden {
+  display: none;
 }
 
 .black {

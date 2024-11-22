@@ -1,4 +1,4 @@
-import './Table.css';
+import './game.css';
 import { useState } from 'react';
 
 let max_shots = 5
@@ -54,4 +54,42 @@ function Table() {
   );
 }
 
-export default Table;
+let board = []
+for (let i = 0; i < 10; i++) {
+  let row = []
+  for (let i = 0; i < 10; i++) {
+    row.push(i % 2)
+  }
+  board.push(row)
+}
+console.log(board)
+
+const click = (e) => {
+  let tokens = document.querySelectorAll(".Token.staged:not(.hidden)")
+
+  Array.from(tokens).forEach((token) => {
+    let row = parseInt(token.getAttribute("row"))
+    let col = parseInt(token.getAttribute("col"))
+    if (board[row][col] == 1) {
+      token.classList.remove("staged")
+      token.classList.add("hit")
+    } else {
+      token.classList.remove("staged")
+      token.classList.add("miss")
+    }
+  })
+}
+
+
+function Game() {
+  return (
+    <div className='Game'>
+      <div id="container">
+        <Table />
+      </div>
+      <button onClick={(event) => click(event)}>Fire</button>
+    </div>
+  );
+}
+
+export default Game;

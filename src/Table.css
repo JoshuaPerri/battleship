@@ -22,21 +22,31 @@
 }
 
 .Token {
-  background-color: red;
   width: calc(100% - 20px);
   height: calc(100% - 20px);
   margin: 10px;
   border-radius: 100%;
-  border: 2px solid maroon;
 }
 
 .hidden {
   display: none;
 }
 
-.black {
-  background-color: black;
+.staged {
+  background-color: yellow;
+  border: 2px solid #bbbb00;
 }
+
+.hit {
+  background-color: red;
+  border: 2px solid maroon;
+}
+
+.miss {
+  background-color: rgb(165, 165, 165);
+  border: 2px solid gray;
+}
+
 
 #container {
   display: flex;

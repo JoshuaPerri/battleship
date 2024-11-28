@@ -2,6 +2,7 @@ import './game.css';
 import { useState } from 'react';
 
 let max_shots = 5
+const GRIDSIZE = 10
 
 function toggleClass(element, className) {
   if (element.classList.contains(className)) {
@@ -45,16 +46,76 @@ function Table({gameState, onStage, onUnstage}) {
     list.push(i)
   }
 
+  const mouseMove = (e, isSelected) => {
+    if (isSelected) {
+
+      let cell = Array.from(e.currentTarget.children).filter((child) => child.classList.contains("Cell"))[0];
+      let cellBox = cell.getBoundingClientRect();
+      let cellSize = {
+        l: cellBox.right - cellBox.left, 
+        w: cellBox.bottom - cellBox.top
+      }
+      console.log(cellSize)
+
+      var rect = e.currentTarget.getBoundingClientRect();
+      var mousePos = {
+        x: Math.ceil(e.clientX - rect.x), 
+        y: Math.ceil(e.clientY - rect.y)
+      };
+      var tableSize = {
+        l: rect.right - rect.left, 
+        w: rect.bottom - rect.top
+      };
+      var periodX = tableSize.l / GRIDSIZE;
+      var periodY = tableSize.w / GRIDSIZE;
+      var gridPos = {
+        x: Math.floor(mousePos.x / periodX), 
+        y: Math.floor(mousePos.y / periodY)
+      }
+
+      if (Object.is(gridPos.x, -0) || gridPos.x < 0 || gridPos.x >= GRIDSIZE) {
+        return
+      } else if (Object.is(gridPos.y, -0) || gridPos.y < 0 || gridPos.y >= GRIDSIZE) {
+        return
+      }
+
+      console.log(gridPos)
+      let temp = Array.from(e.currentTarget.children).filter((child) => child.classList.contains("Temp"))[0];
+      temp.style.left = (gridPos.x * periodX + rect.left) + "px";
+      temp.style.top = (gridPos.y * periodY + rect.top) + "px";
+    }
+  }
+
   return (
-    <div className="Table">
+    <div className="Table" onMouseMove={(e) => mouseMove(e, gameState.isSelected)}>
       {list.map(i => 
         <Cell key={i} row={(i - i % 10) / 10} col={i % 10} gameState={gameState} onStage={onStage} onUnstage={onUnstage}></Cell>
       )}
+      <div className='Temp'></div>
     </div>
   );
 }
 
+function Boat({gameState, onSelect, onDeselect}) {
 
+  const click = (e) => {
+    var target = e.currentTarget;
+    if (gameState.isSelected) {
+      target.classList.remove("selected");
+      onDeselect()
+    } else {
+      target.classList.add("selected");
+      onSelect()
+    }
+  }
+
+  return (
+    <div 
+      className="Boat" 
+      onClick={(e) => click(e)}
+    />
+  );
+}
 
 function Game() {
 
@@ -66,11 +127,12 @@ function Game() {
     }
     board.push(row)
   }
-  console.log(board)
+  // console.log(board)
 
   const [gameState, setGameState] = useState({
     shotsRemaining: 5,
-    board: board
+    board: board,
+    isSelected: false
   })
 
   const click = (e) => {
@@ -92,6 +154,11 @@ function Game() {
 
   return (
     <div className='Game'>
+      <Boat 
+        gameState={gameState} 
+        onSelect={() =>   setGameState({...gameState, isSelected: true})}
+        onDeselect={() => setGameState({...gameState, isSelected: false})}
+      />
       <div id="container">
         <Table 
           gameState={gameState} 

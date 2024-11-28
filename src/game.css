@@ -55,3 +55,20 @@
   width: 100vw;
   height: 100vh;
 }
+
+.Boat {
+  background-color: lightblue;
+  width: 100px;
+  height: 200px;
+}
+
+.Boat.selected {
+  background-color: blue;
+}
+
+.Temp {
+  position: absolute;
+  background-color: orange;
+  width: 100px;
+  height: 200px;
+}

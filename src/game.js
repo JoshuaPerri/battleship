@@ -15,27 +15,49 @@ function toggleClass(element, className) {
 }
 
 function Cell(props) {
-  const click = (e) => {
-    let button = e.currentTarget
-    // Search children of button to get token
-    let token = Array.from(button.children).filter((child) => child.classList.contains("Token"))[0];
+  const [hasToken, setHasToken] = useState(false)
+  // const [tokenFired, setTokenFired] = useState(false)
+  const [isHovered, setIsHovered] = useState(false)
 
-    if (token.classList.contains("hidden")) {
+  const click = (e) => {
+    // let button = e.currentTarget
+    // Search children of button to get token
+    // let token = Array.from(button.children).filter((child) => child.classList.contains("Token"))[0];
+
+    if (!hasToken) {
       if (props.gameState.shotsRemaining > 0) {
-        token.classList.remove("hidden")
         props.onStage();
+        setHasToken(true);
       }
     } else {
       if (props.gameState.shotsRemaining < max_shots) {
-        token.classList.add("hidden")
         props.onUnstage();
+        setHasToken(false);
       }
     }
   }
 
+  const mouseEnter = (e) => {
+    if (props.gameState.isSelected) {
+      setIsHovered(true)
+    }
+  }
+
+  const mouseExit = (e) => {
+    if (props.gameState.isSelected) {
+      setIsHovered(false)
+    }
+  }
+
   return (
-    <button className="Cell" onClick={(event) => click(event)}>
-      <div className='Token staged hidden' col={props.col} row={props.row}></div>
+    <button className="Cell" onClick={(event) => click(event)} onMouseEnter={(e) => mouseEnter(e)} onMouseOut={(e) => mouseExit(e)}>
+      {/* <div className='Token staged hidden' col={props.col} row={props.row}></div> */}
+      { hasToken && 
+        <div className='Token staged' col={props.col} row={props.row}/>
+      }
+      {(isHovered && props.gameState.isSelected) && 
+        <div className='Temp'/>
+      }
     </button>
   )
 }
@@ -47,43 +69,43 @@ function Table({gameState, onStage, onUnstage}) {
   }
 
   const mouseMove = (e, isSelected) => {
-    if (isSelected) {
+    // if (isSelected) {
 
-      let cell = Array.from(e.currentTarget.children).filter((child) => child.classList.contains("Cell"))[0];
-      let cellBox = cell.getBoundingClientRect();
-      let cellSize = {
-        l: cellBox.right - cellBox.left, 
-        w: cellBox.bottom - cellBox.top
-      }
-      console.log(cellSize)
+    //   let cell = Array.from(e.currentTarget.children).filter((child) => child.classList.contains("Cell"))[0];
+    //   let cellBox = cell.getBoundingClientRect();
+    //   let cellSize = {
+    //     l: cellBox.right - cellBox.left, 
+    //     w: cellBox.bottom - cellBox.top
+    //   }
+    //   console.log(cellSize)
 
-      var rect = e.currentTarget.getBoundingClientRect();
-      var mousePos = {
-        x: Math.ceil(e.clientX - rect.x), 
-        y: Math.ceil(e.clientY - rect.y)
-      };
-      var tableSize = {
-        l: rect.right - rect.left, 
-        w: rect.bottom - rect.top
-      };
-      var periodX = tableSize.l / GRIDSIZE;
-      var periodY = tableSize.w / GRIDSIZE;
-      var gridPos = {
-        x: Math.floor(mousePos.x / periodX), 
-        y: Math.floor(mousePos.y / periodY)
-      }
+    //   var rect = e.currentTarget.getBoundingClientRect();
+    //   var mousePos = {
+    //     x: Math.ceil(e.clientX - rect.x), 
+    //     y: Math.ceil(e.clientY - rect.y)
+    //   };
+    //   var tableSize = {
+    //     l: rect.right - rect.left, 
+    //     w: rect.bottom - rect.top
+    //   };
+    //   var periodX = tableSize.l / GRIDSIZE;
+    //   var periodY = tableSize.w / GRIDSIZE;
+    //   var gridPos = {
+    //     x: Math.floor(mousePos.x / periodX), 
+    //     y: Math.floor(mousePos.y / periodY)
+    //   }
 
-      if (Object.is(gridPos.x, -0) || gridPos.x < 0 || gridPos.x >= GRIDSIZE) {
-        return
-      } else if (Object.is(gridPos.y, -0) || gridPos.y < 0 || gridPos.y >= GRIDSIZE) {
-        return
-      }
+    //   if (Object.is(gridPos.x, -0) || gridPos.x < 0 || gridPos.x >= GRIDSIZE) {
+    //     return
+    //   } else if (Object.is(gridPos.y, -0) || gridPos.y < 0 || gridPos.y >= GRIDSIZE) {
+    //     return
+    //   }
 
-      console.log(gridPos)
-      let temp = Array.from(e.currentTarget.children).filter((child) => child.classList.contains("Temp"))[0];
-      temp.style.left = (gridPos.x * periodX + rect.left) + "px";
-      temp.style.top = (gridPos.y * periodY + rect.top) + "px";
-    }
+    //   console.log(gridPos)
+    //   let temp = Array.from(e.currentTarget.children).filter((child) => child.classList.contains("Temp"))[0];
+    //   temp.style.left = (gridPos.x * periodX + rect.left) + "px";
+    //   temp.style.top = (gridPos.y * periodY + rect.top) + "px";
+    // }
   }
 
   return (
@@ -91,7 +113,6 @@ function Table({gameState, onStage, onUnstage}) {
       {list.map(i => 
         <Cell key={i} row={(i - i % 10) / 10} col={i % 10} gameState={gameState} onStage={onStage} onUnstage={onUnstage}></Cell>
       )}
-      <div className='Temp'></div>
     </div>
   );
 }

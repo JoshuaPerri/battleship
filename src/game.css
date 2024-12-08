@@ -6,20 +6,25 @@
   display: grid;
   grid-template-columns: repeat(10, 10%);
   grid-template-rows: repeat(10, 10%);
+
+  /* border: 1px solid #eeeeee; */
+  border: 1px solid black;
 }
 
 
 .Cell {
   background-color: lightgray;
-  margin: 1px;
+  /* margin: 1px; */
+  /* border: 1px solid #eeeeee; */
+  border: 1px solid black;
   padding: 0;
-  border: 0;
-  transition: linear 0.1s;
+  /* border: 0; */
+  /* transition: linear 0.1s; */
 }
 
-.Cell:hover {
+/* .Cell:hover {
   background-color: grey;
-}
+} */
 
 .Token {
   width: calc(100% - 20px);
@@ -56,10 +61,17 @@
   height: 100vh;
 }
 
+.BoatSelectContainer {
+  display: flex;
+  flex-direction: row;
+  background-color: darkcyan;
+}
+
 .Boat {
   background-color: lightblue;
   width: 100px;
-  height: 200px;
+  border: 1px solid blue
+  /* height: 200px; */
 }
 
 .Boat.selected {
@@ -69,8 +81,8 @@
 .Temp {
   position: relative;
   background-color: orange;
-  width: 100%;
-  height: calc(200% + 2px);
+  /* width: 100%;
+  height: calc(200% + 2px); */
 
   pointer-events: none;
 

@@ -4,19 +4,18 @@ import { useState } from 'react';
 let max_shots = 5
 const GRIDSIZE = 10
 
-function toggleClass(element, className) {
-  if (element.classList.contains(className)) {
-    element.classList.remove(className)
-    return true
-  } else {
-    element.classList.add(className)
-    return false
-  }
-}
+// function toggleClass(element, className) {
+//   if (element.classList.contains(className)) {
+//     element.classList.remove(className)
+//     return true
+//   } else {
+//     element.classList.add(className)
+//     return false
+//   }
+// }
 
 function Cell(props) {
   const [hasToken, setHasToken] = useState(false)
-  // const [tokenFired, setTokenFired] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
 
   const click = (e) => {
@@ -49,14 +48,34 @@ function Cell(props) {
     }
   }
 
+  var shipLength = props.gameState.selectedShip.length;
+  var shipOrientation = props.gameState.selectedShip.orientation;
+  var lengthString = "calc(" + (shipLength * 100) + "% + " + (2 * (shipLength - 1)) + "px)"
+
+  // Factor by which to shift the placing ship if it would otherwise be placed off the table
+  var shiftFactorTop = props.row + shipLength - GRIDSIZE;
+  var shiftStringTop  = "calc(-" + (100 * shiftFactorTop) + "% - " + (2 * shiftFactorTop) + "px)";
+
+  var shiftFactorLeft = props.col + shipLength - GRIDSIZE;
+  var shiftStringLeft  = "calc(-" + (100 * shiftFactorLeft) + "% - " + (2 * shiftFactorLeft) + "px)";
+
+
   return (
     <button className="Cell" onClick={(event) => click(event)} onMouseEnter={(e) => mouseEnter(e)} onMouseOut={(e) => mouseExit(e)}>
       {/* <div className='Token staged hidden' col={props.col} row={props.row}></div> */}
       { hasToken && 
         <div className='Token staged' col={props.col} row={props.row}/>
       }
-      {(isHovered && props.gameState.isSelected) && 
-        <div className='Temp'/>
+      {(isHovered && props.gameState.isSelected) &&
+        <div 
+          className='Temp' 
+          style={{
+            top:  (props.row + shipLength > GRIDSIZE) && (shipOrientation === "ver") ? shiftStringTop: '0px',
+            left: (props.col + shipLength > GRIDSIZE) && (shipOrientation === "hor") ? shiftStringLeft: '0px',
+            width:  shipOrientation === "ver" ? '100%': lengthString,
+            height: shipOrientation === "ver" ? lengthString: "100%"
+          }}
+        />
       }
     </button>
   )
@@ -117,25 +136,90 @@ function Table({gameState, onStage, onUnstage}) {
   );
 }
 
-function Boat({gameState, onSelect, onDeselect}) {
+function Boat({gameState, setGameState, length, orientation, index}) {
 
   const click = (e) => {
     var target = e.currentTarget;
     if (gameState.isSelected) {
       target.classList.remove("selected");
-      onDeselect()
+      setGameState({
+        ...gameState,
+        isSelected: false,
+        selectedShip: {}
+      })
     } else {
       target.classList.add("selected");
-      onSelect()
+      setGameState({
+        ...gameState,
+        isSelected: true,
+        selectedShip: {
+          length: length,
+          orientation: orientation,
+          index: index
+        }
+      })
     }
   }
 
+  var lengthString = (100 * length) + "px"
+
+  // // Factor by which to shift the placing ship if it would otherwise be placed off the table
+  // var shiftFactorTop = props.row + shipLength - GRIDSIZE;
+  // var shiftStringTop  = "calc(-" + (100 * shiftFactorTop) + "% - " + (2 * shiftFactorTop) + "px)";
+
+  // var shiftFactorLeft = props.col + shipLength - GRIDSIZE;
+  // var shiftStringLeft  = "calc(-" + (100 * shiftFactorLeft) + "% - " + (2 * shiftFactorLeft) + "px)";
+
   return (
     <div 
+      style={{
+        height: orientation === "ver" ? lengthString: '100px',
+        width:  orientation === "ver" ? '100px': lengthString
+      }}
       className="Boat" 
       onClick={(e) => click(e)}
     />
   );
+}
+
+function BoatSelectContianer({gameState, setGameState}) {
+
+  function rotate(e) {
+    if (gameState.isSelected) {
+      var newShips = gameState.ships
+      if (newShips[gameState.selectedShip.index].orientation === "ver") {
+        newShips[gameState.selectedShip.index].orientation = "hor"
+      } else {
+        newShips[gameState.selectedShip.index].orientation = "ver"
+      }
+
+      setGameState({
+        ...gameState,
+        selectedShip: {
+          ...gameState.selectedShip,
+          orientation: newShips[gameState.selectedShip.index].orientation
+        },
+        ships: newShips,
+      })
+    }
+  }
+
+  return (
+    <div className='BoatSelectContainer'>
+
+      {gameState.ships.map((boat, index) => 
+        <Boat
+          gameState={gameState} 
+          setGameState={setGameState}
+          length={boat.length}
+          orientation={boat.orientation}
+          index={index}
+        />
+      )}
+      <button onClick={(e) => rotate(e)}>Rotate</button>
+    </div>
+  );
+  
 }
 
 function Game() {
@@ -153,7 +237,33 @@ function Game() {
   const [gameState, setGameState] = useState({
     shotsRemaining: 5,
     board: board,
-    isSelected: false
+    isSelected: false,
+    ships: [
+      {
+        length: 2,
+        orientation: "ver"
+      },
+      {
+        length: 3,
+        orientation: "ver"
+      },
+      {
+        length: 3,
+        orientation: "ver"
+      },
+      {
+        length: 4,
+        orientation: "hor"
+      },
+      {
+        length: 5,
+        orientation: "ver"
+      }
+    ],
+    selectedShip: {
+      length: 0,
+      orientation: ""
+    }
   })
 
   const click = (e) => {
@@ -162,7 +272,7 @@ function Game() {
     Array.from(tokens).forEach((token) => {
       let row = parseInt(token.getAttribute("row"))
       let col = parseInt(token.getAttribute("col"))
-      if (board[row][col] == 1) {
+      if (board[row][col] === 1) {
         token.classList.remove("staged")
         token.classList.add("hit")
       } else {
@@ -175,10 +285,9 @@ function Game() {
 
   return (
     <div className='Game'>
-      <Boat 
+      <BoatSelectContianer 
         gameState={gameState} 
-        onSelect={() =>   setGameState({...gameState, isSelected: true})}
-        onDeselect={() => setGameState({...gameState, isSelected: false})}
+        setGameState={setGameState}
       />
       <div id="container">
         <Table 

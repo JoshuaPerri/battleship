@@ -139,16 +139,13 @@ function Table({gameState, onStage, onUnstage}) {
 function Boat({gameState, setGameState, length, orientation, index}) {
 
   const click = (e) => {
-    var target = e.currentTarget;
-    if (gameState.isSelected) {
-      target.classList.remove("selected");
+    if (gameState.isSelected && gameState.selectedShip.index === index) {
       setGameState({
         ...gameState,
         isSelected: false,
         selectedShip: {}
       })
     } else {
-      target.classList.add("selected");
       setGameState({
         ...gameState,
         isSelected: true,
@@ -174,7 +171,8 @@ function Boat({gameState, setGameState, length, orientation, index}) {
     <div 
       style={{
         height: orientation === "ver" ? lengthString: '100px',
-        width:  orientation === "ver" ? '100px': lengthString
+        width:  orientation === "ver" ? '100px': lengthString,
+        backgroundColor: (gameState.isSelected && gameState.selectedShip.index === index) ? "blue": "lightblue"
       }}
       className="Boat" 
       onClick={(e) => click(e)}
@@ -206,16 +204,32 @@ function BoatSelectContianer({gameState, setGameState}) {
 
   return (
     <div className='BoatSelectContainer'>
-
-      {gameState.ships.map((boat, index) => 
-        <Boat
-          gameState={gameState} 
-          setGameState={setGameState}
-          length={boat.length}
-          orientation={boat.orientation}
-          index={index}
-        />
+      <div className='BoatSelectHorizontal'>
+        {gameState.ships.map((boat, index) =>
+          boat.orientation === "ver" &&
+          <Boat
+            gameState={gameState} 
+            setGameState={setGameState}
+            length={boat.length}
+            orientation={boat.orientation}
+            index={index}
+          />
+        )}
+      </div>
+      <div className='BoatSelectVertical'>
+        {gameState.ships.map((boat, index) => 
+          boat.orientation === "hor" &&
+          <Boat
+            gameState={gameState} 
+            setGameState={setGameState}
+            length={boat.length}
+            orientation={boat.orientation}
+            index={index}
+          />
       )}
+      </div>
+
+
       <button onClick={(e) => rotate(e)}>Rotate</button>
     </div>
   );
@@ -232,7 +246,6 @@ function Game() {
     }
     board.push(row)
   }
-  // console.log(board)
 
   const [gameState, setGameState] = useState({
     shotsRemaining: 5,

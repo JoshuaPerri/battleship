@@ -14,7 +14,7 @@ const GRIDSIZE = 10
 //   }
 // }
 
-function Cell(props) {
+function Cell({key, row, col, gameState, setGameState}) {
   const [hasToken, setHasToken] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
 
@@ -24,39 +24,57 @@ function Cell(props) {
     // let token = Array.from(button.children).filter((child) => child.classList.contains("Token"))[0];
 
     if (!hasToken) {
-      if (props.gameState.shotsRemaining > 0) {
-        props.onStage();
+      if (gameState.shotsRemaining > 0) {
+        setGameState({
+          ...gameState, 
+          shotsRemaining: gameState.shotsRemaining - 1
+        });
         setHasToken(true);
       }
     } else {
-      if (props.gameState.shotsRemaining < max_shots) {
-        props.onUnstage();
+      if (gameState.shotsRemaining < max_shots) {
+        setGameState({
+          ...gameState, 
+          shotsRemaining: gameState.shotsRemaining + 1
+        });
         setHasToken(false);
       }
     }
   }
 
   const mouseEnter = (e) => {
-    if (props.gameState.isSelected) {
+    if (gameState.isSelected) {
       setIsHovered(true)
     }
   }
 
   const mouseExit = (e) => {
-    if (props.gameState.isSelected) {
+    if (gameState.isSelected) {
       setIsHovered(false)
     }
   }
 
-  var shipLength = props.gameState.selectedShip.length;
-  var shipOrientation = props.gameState.selectedShip.orientation;
+  var shipLength = gameState.selectedShip.length;
+  var shipOrientation = gameState.selectedShip.orientation;
+
+  var shiftFactor = Math.min(GRIDSIZE - ((shipOrientation === "ver" ? row: col) + shipLength), 0);
+
+  setGameState({
+    ...gameState,
+    selectedShipLocation: {
+      x: row + (shipOrientation === "ver" ? shiftFactor: 0),
+      y: col + (shipOrientation === "ver" ? 0: shiftFactor),
+    }
+  })
+
+
   var lengthString = "calc(" + (shipLength * 100) + "% + " + (2 * (shipLength - 1)) + "px)"
 
   // Factor by which to shift the placing ship if it would otherwise be placed off the table
-  var shiftFactorTop = props.row + shipLength - GRIDSIZE;
+  var shiftFactorTop = row + shipLength - GRIDSIZE;
   var shiftStringTop  = "calc(-" + (100 * shiftFactorTop) + "% - " + (2 * shiftFactorTop) + "px)";
 
-  var shiftFactorLeft = props.col + shipLength - GRIDSIZE;
+  var shiftFactorLeft = col + shipLength - GRIDSIZE;
   var shiftStringLeft  = "calc(-" + (100 * shiftFactorLeft) + "% - " + (2 * shiftFactorLeft) + "px)";
 
 
@@ -64,14 +82,14 @@ function Cell(props) {
     <button className="Cell" onClick={(event) => click(event)} onMouseEnter={(e) => mouseEnter(e)} onMouseOut={(e) => mouseExit(e)}>
       {/* <div className='Token staged hidden' col={props.col} row={props.row}></div> */}
       { hasToken && 
-        <div className='Token staged' col={props.col} row={props.row}/>
+        <div className='Token staged' col={col} row={row}/>
       }
-      {(isHovered && props.gameState.isSelected) &&
+      {(isHovered && gameState.isSelected) &&
         <div 
           className='Temp' 
           style={{
-            top:  (props.row + shipLength > GRIDSIZE) && (shipOrientation === "ver") ? shiftStringTop: '0px',
-            left: (props.col + shipLength > GRIDSIZE) && (shipOrientation === "hor") ? shiftStringLeft: '0px',
+            top:  (row + shipLength > GRIDSIZE) && (shipOrientation === "ver") ? shiftStringTop: '0px',
+            left: (col + shipLength > GRIDSIZE) && (shipOrientation === "hor") ? shiftStringLeft: '0px',
             width:  shipOrientation === "ver" ? '100%': lengthString,
             height: shipOrientation === "ver" ? lengthString: "100%"
           }}
@@ -81,7 +99,7 @@ function Cell(props) {
   )
 }
 
-function Table({gameState, onStage, onUnstage}) {
+function Table({gameState, setGameState}) {
   const list = []
   for (let i = 0; i < 100; i++) {
     list.push(i)
@@ -130,7 +148,7 @@ function Table({gameState, onStage, onUnstage}) {
   return (
     <div className="Table" onMouseMove={(e) => mouseMove(e, gameState.isSelected)}>
       {list.map(i => 
-        <Cell key={i} row={(i - i % 10) / 10} col={i % 10} gameState={gameState} onStage={onStage} onUnstage={onUnstage}></Cell>
+        <Cell key={i} row={(i - i % 10) / 10} col={i % 10} gameState={gameState} setGameState={setGameState}></Cell>
       )}
     </div>
   );
@@ -276,6 +294,10 @@ function Game() {
     selectedShip: {
       length: 0,
       orientation: ""
+    },
+    selectedShipLocation: {
+      x: -1,
+      y: -1,
     }
   })
 
@@ -305,8 +327,7 @@ function Game() {
       <div id="container">
         <Table 
           gameState={gameState} 
-          onStage={() =>   setGameState({...gameState, shotsRemaining: gameState.shotsRemaining - 1})} 
-          onUnstage={() => setGameState({...gameState, shotsRemaining: gameState.shotsRemaining + 1})} 
+          setGameState={setGameState}
         />
       </div>
       <button onClick={(event) => click(event)}>Fire</button>

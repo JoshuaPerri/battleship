@@ -1,7 +1,7 @@
 import './game.css';
 import { useState } from 'react';
 
-let max_shots = 5
+// let max_shots = 5
 const GRIDSIZE = 10
 
 // function toggleClass(element, className) {
@@ -14,87 +14,162 @@ const GRIDSIZE = 10
 //   }
 // }
 
-function Cell({key, row, col, gameState, setGameState}) {
-  const [hasToken, setHasToken] = useState(false)
-  const [isHovered, setIsHovered] = useState(false)
+function Cell({row, col, gameState, setGameState}) {
+  // const [hasToken, setHasToken] = useState(false)
 
   const click = (e) => {
     // let button = e.currentTarget
     // Search children of button to get token
     // let token = Array.from(button.children).filter((child) => child.classList.contains("Token"))[0];
 
-    if (!hasToken) {
-      if (gameState.shotsRemaining > 0) {
-        setGameState({
-          ...gameState, 
-          shotsRemaining: gameState.shotsRemaining - 1
-        });
-        setHasToken(true);
+    // if (!hasToken) {
+    //   if (gameState.shotsRemaining > 0) {
+    //     setGameState({
+    //       ...gameState, 
+    //       shotsRemaining: gameState.shotsRemaining - 1
+    //     });
+    //     setHasToken(true);
+    //   }
+    // } else {
+    //   if (gameState.shotsRemaining < max_shots) {
+    //     setGameState({
+    //       ...gameState, 
+    //       shotsRemaining: gameState.shotsRemaining + 1
+    //     });
+    //     setHasToken(false);
+    //   }
+    // }
+
+    // Check if ship conflicts
+    if (gameState.isSelected) {
+      var newShips = gameState.ships;
+      newShips[gameState.selectedShip.index].isPlaced = true;
+      newShips[gameState.selectedShip.index].position = {
+        x: row + (shipOrientation === "ver" ? shiftFactor: 0),
+        y: col + (shipOrientation === "ver" ? 0: shiftFactor),
       }
-    } else {
-      if (gameState.shotsRemaining < max_shots) {
-        setGameState({
-          ...gameState, 
-          shotsRemaining: gameState.shotsRemaining + 1
-        });
-        setHasToken(false);
+      setGameState({
+        ...gameState,
+        isSelected: false,
+        ships: newShips,
+        selectedShip: {
+          length: 0,
+          orientation: "",
+          index: -1,
+          position: {
+            x: -1,
+            y: -1,
+          }
+        }
+      });
+
+      // Update board
+      // Remove previous placement of this ship
+      for (var i = 0; i < gameState.board.length; i++) {
+        for (var j = 0; j < gameState.board[i].length; j++) {
+          if (gameState.board[i][j] === gameState.selectedShip.index + 1) {
+            gameState.board[i][j] = 0;
+          }
+        }
       }
+
+      // Add new placement of the ship
+      var newBoard = gameState.board;
+      var position = gameState.selectedShip.position
+      for (var i = 0; i < gameState.selectedShip.length; i++) {
+        if (gameState.selectedShip.orientation === "ver") {
+          newBoard[position.x + i][position.y] = gameState.selectedShip.index + 1;
+        } else {
+          newBoard[position.x][position.y + i] = gameState.selectedShip.index + 1;
+        }
+      }
+      console.log(gameState.board);
     }
   }
 
-  const mouseEnter = (e) => {
-    if (gameState.isSelected) {
-      setIsHovered(true)
-    }
-  }
-
-  const mouseExit = (e) => {
-    if (gameState.isSelected) {
-      setIsHovered(false)
-    }
-  }
 
   var shipLength = gameState.selectedShip.length;
   var shipOrientation = gameState.selectedShip.orientation;
 
   var shiftFactor = Math.min(GRIDSIZE - ((shipOrientation === "ver" ? row: col) + shipLength), 0);
 
-  setGameState({
-    ...gameState,
-    selectedShipLocation: {
-      x: row + (shipOrientation === "ver" ? shiftFactor: 0),
-      y: col + (shipOrientation === "ver" ? 0: shiftFactor),
+  const checkGrid = () => {
+    for (var i = 0; i < gameState.selectedShip.length; i++) {
+
     }
-  })
+  }
+
+
+  const mouseEnter = (e) => {
+    if (gameState.isSelected) {
+      setGameState({
+        ...gameState,
+        selectedShip: {
+          ...gameState.selectedShip,
+          position: {
+            x: row + (shipOrientation === "ver" ? shiftFactor: 0),
+            y: col + (shipOrientation === "ver" ? 0: shiftFactor),
+          }
+        }
+      });
+    }
+  }
+
+  const mouseExit = (e) => {
+    if (gameState.isSelected) {
+      setGameState({
+        ...gameState,
+        selectedShip: {
+          ...gameState.selectedShip,
+          position: {
+            x: -1,
+            y: -1,
+          }
+        }
+      });
+    }
+  }
 
 
   var lengthString = "calc(" + (shipLength * 100) + "% + " + (2 * (shipLength - 1)) + "px)"
 
-  // Factor by which to shift the placing ship if it would otherwise be placed off the table
-  var shiftFactorTop = row + shipLength - GRIDSIZE;
-  var shiftStringTop  = "calc(-" + (100 * shiftFactorTop) + "% - " + (2 * shiftFactorTop) + "px)";
-
-  var shiftFactorLeft = col + shipLength - GRIDSIZE;
-  var shiftStringLeft  = "calc(-" + (100 * shiftFactorLeft) + "% - " + (2 * shiftFactorLeft) + "px)";
-
-
   return (
-    <button className="Cell" onClick={(event) => click(event)} onMouseEnter={(e) => mouseEnter(e)} onMouseOut={(e) => mouseExit(e)}>
+    <button 
+      className="Cell" 
+      onClick={(event) => click(event)} 
+      onMouseEnter={(e) => mouseEnter(e)} 
+      onMouseOut={(e) => mouseExit(e)}
+    >
       {/* <div className='Token staged hidden' col={props.col} row={props.row}></div> */}
-      { hasToken && 
+      {/* {hasToken && 
         <div className='Token staged' col={col} row={row}/>
-      }
-      {(isHovered && gameState.isSelected) &&
-        <div 
+      } */}
+
+      {/* Ghost ship when placing */}
+      {(gameState.isSelected && row === gameState.selectedShip.position.x && col === gameState.selectedShip.position.y && gameState.board[row][col] === 0) &&
+        <div
           className='Temp' 
           style={{
-            top:  (row + shipLength > GRIDSIZE) && (shipOrientation === "ver") ? shiftStringTop: '0px',
-            left: (col + shipLength > GRIDSIZE) && (shipOrientation === "hor") ? shiftStringLeft: '0px',
             width:  shipOrientation === "ver" ? '100%': lengthString,
             height: shipOrientation === "ver" ? lengthString: "100%"
           }}
         />
       }
+
+      {/* Placed ships */}
+      {gameState.ships.map((ship, i) => 
+        ((row === ship.position.x && col === ship.position.y) &&
+          <div
+            key={i}
+            className='Temp' 
+            style={{
+              width:  ship.orientation === "ver" ? '100%': "calc(" + (ship.length * 100) + "% + " + (2 * (ship.length - 1)) + "px)",
+              height: ship.orientation === "ver" ? "calc(" + (ship.length * 100) + "% + " + (2 * (ship.length - 1)) + "px)": "100%"
+            }}
+          />
+        )
+      )}
+
     </button>
   )
 }
@@ -161,7 +236,15 @@ function Boat({gameState, setGameState, length, orientation, index}) {
       setGameState({
         ...gameState,
         isSelected: false,
-        selectedShip: {}
+        selectedShip: {
+          length: 0,
+          orientation: "",
+          index: -1,
+          position: {
+            x: -1,
+            y: -1,
+          }
+        }
       })
     } else {
       setGameState({
@@ -170,7 +253,11 @@ function Boat({gameState, setGameState, length, orientation, index}) {
         selectedShip: {
           length: length,
           orientation: orientation,
-          index: index
+          index: index,
+          position: {
+            x: -1,
+            y: -1,
+          }
         }
       })
     }
@@ -220,12 +307,55 @@ function BoatSelectContianer({gameState, setGameState}) {
     }
   }
 
+  
+  function reset(e) {
+    var resetShips = gameState.ships;
+    for (var i = 0; i < resetShips.length; i++) {
+      resetShips[i].isPlaced = false;
+      resetShips[i].position =  {
+        x: -1,
+        y: -1,
+      }
+    }
+
+    var board = []
+    for (let i = 0; i < 10; i++) {
+      let row = []
+      for (let i = 0; i < 10; i++) {
+        row.push(0)
+      }
+      board.push(row)
+    }
+  
+    setGameState({
+      ...gameState,
+      isSelected: false,
+      board: board,
+      ships: resetShips,
+      selectedShip: {
+        length: 0,
+        orientation: "",
+        isPlaced: false,
+        index: -1,
+        position: {
+          x: -1,
+          y: -1,
+        }
+      }
+    });
+
+
+  }
+    
+
+
   return (
     <div className='BoatSelectContainer'>
       <div className='BoatSelectHorizontal'>
         {gameState.ships.map((boat, index) =>
-          boat.orientation === "ver" &&
+          (boat.orientation === "ver" && !boat.isPlaced) &&
           <Boat
+            key={index}
             gameState={gameState} 
             setGameState={setGameState}
             length={boat.length}
@@ -236,8 +366,9 @@ function BoatSelectContianer({gameState, setGameState}) {
       </div>
       <div className='BoatSelectVertical'>
         {gameState.ships.map((boat, index) => 
-          boat.orientation === "hor" &&
+          (boat.orientation === "hor" && !boat.isPlaced) &&
           <Boat
+            key={index}
             gameState={gameState} 
             setGameState={setGameState}
             length={boat.length}
@@ -249,6 +380,7 @@ function BoatSelectContianer({gameState, setGameState}) {
 
 
       <button onClick={(e) => rotate(e)}>Rotate</button>
+      <button onClick={(e) => reset(e)}>Reset</button>
     </div>
   );
   
@@ -260,7 +392,7 @@ function Game() {
   for (let i = 0; i < 10; i++) {
     let row = []
     for (let i = 0; i < 10; i++) {
-      row.push(i % 2)
+      row.push(0)
     }
     board.push(row)
   }
@@ -272,32 +404,59 @@ function Game() {
     ships: [
       {
         length: 2,
-        orientation: "ver"
+        orientation: "ver",
+        isPlaced: false,
+        position: {
+          x: -1,
+          y: -1,
+        },
       },
       {
         length: 3,
-        orientation: "ver"
+        orientation: "ver",
+        isPlaced: false,
+        position: {
+          x: -1,
+          y: -1,
+        },
       },
       {
         length: 3,
-        orientation: "ver"
+        orientation: "ver",
+        isPlaced: false,
+        position: {
+          x: -1,
+          y: -1,
+        },
       },
       {
         length: 4,
-        orientation: "hor"
+        orientation: "hor",
+        isPlaced: false,
+        position: {
+          x: -1,
+          y: -1,
+        },
       },
       {
         length: 5,
-        orientation: "ver"
+        orientation: "ver",
+        isPlaced: false,
+        position: {
+          x: -1,
+          y: -1,
+        },
       }
     ],
     selectedShip: {
       length: 0,
-      orientation: ""
-    },
-    selectedShipLocation: {
-      x: -1,
-      y: -1,
+      orientation: "",
+      isPlaced: false,
+      index: -1,
+      position: {
+        x: -1,
+        y: -1,
+      }
     }
   })
 

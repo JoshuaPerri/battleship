@@ -42,12 +42,17 @@ function Cell({row, col, gameState, setGameState}) {
 
     // Check if ship conflicts
     if (gameState.isSelected) {
+
+      if (!canPlaceShip()) {
+        console.log("Can't place ship here")
+        return;
+      }
+
+
+
       var newShips = gameState.ships;
       newShips[gameState.selectedShip.index].isPlaced = true;
-      newShips[gameState.selectedShip.index].position = {
-        x: row + (shipOrientation === "ver" ? shiftFactor: 0),
-        y: col + (shipOrientation === "ver" ? 0: shiftFactor),
-      }
+      newShips[gameState.selectedShip.index].position = gameState.selectedShip.position;
       setGameState({
         ...gameState,
         isSelected: false,
@@ -75,32 +80,31 @@ function Cell({row, col, gameState, setGameState}) {
 
       // Add new placement of the ship
       var newBoard = gameState.board;
-      var position = gameState.selectedShip.position
-      for (var i = 0; i < gameState.selectedShip.length; i++) {
+      var position = gameState.selectedShip.position;
+      for (i = 0; i < gameState.selectedShip.length; i++) {
         if (gameState.selectedShip.orientation === "ver") {
-          newBoard[position.x + i][position.y] = gameState.selectedShip.index + 1;
+          newBoard[position.y + i][position.x] = gameState.selectedShip.index + 1;
         } else {
-          newBoard[position.x][position.y + i] = gameState.selectedShip.index + 1;
+          newBoard[position.y][position.x + i] = gameState.selectedShip.index + 1;
         }
       }
       console.log(gameState.board);
     }
   }
 
-
-  var shipLength = gameState.selectedShip.length;
-  var shipOrientation = gameState.selectedShip.orientation;
-
-
-
-
-
-  var shiftFactor = Math.min(GRIDSIZE - ((shipOrientation === "ver" ? row: col) + shipLength), 0);
-
-  const checkGrid = () => {
+  function canPlaceShip() {
     for (var i = 0; i < gameState.selectedShip.length; i++) {
-
+      if (gameState.selectedShip.orientation === "ver") {
+        if (gameState.board[gameState.selectedShip.position.y + i][gameState.selectedShip.position.x] !== 0) {
+          return false;
+        }
+      } else {
+        if (gameState.board[gameState.selectedShip.position.y][gameState.selectedShip.position.x + i] !== 0) {
+          return false;
+        }
+      }
     }
+    return true;
   }
 
 
@@ -110,35 +114,34 @@ function Cell({row, col, gameState, setGameState}) {
       var length = gameState.selectedShip.length;
       var orientation = gameState.selectedShip.orientation;
   
+      // Shift to place ship so that cursor in the the middle
       var baseShift = -1 * (Math.ceil(length / 2) - 1);
-      var estPosition = {
+      var adjPosition = {
         x: (shipOrientation === "ver" ? col: col + baseShift),
         y: (shipOrientation === "ver" ? row + baseShift : row)
       }
     
       // If the ship would be out-of-bounds on the left or top
-      estPosition.x = Math.max(estPosition.x, 0);
-      estPosition.y = Math.max(estPosition.y, 0);
+      adjPosition.x = Math.max(adjPosition.x, 0);
+      adjPosition.y = Math.max(adjPosition.y, 0);
   
       // If the ship would be out-of-bounds on the bottom or right
       if (orientation === "ver") {
-        estPosition.x = Math.min(GRIDSIZE, estPosition.x);
-        estPosition.y = Math.min(GRIDSIZE, estPosition.y + length) - length;
+        adjPosition.x = Math.min(GRIDSIZE, adjPosition.x);
+        adjPosition.y = Math.min(GRIDSIZE, adjPosition.y + length) - length;
       } else {
-        estPosition.x = Math.min(GRIDSIZE, estPosition.x + length) - length;
-        estPosition.y = Math.min(GRIDSIZE, estPosition.y);
+        adjPosition.x = Math.min(GRIDSIZE, adjPosition.x + length) - length;
+        adjPosition.y = Math.min(GRIDSIZE, adjPosition.y);
       }
 
       setGameState({
         ...gameState,
         selectedShip: {
           ...gameState.selectedShip,
-          position: estPosition
+          position: adjPosition
         }
       });
     }
-
-    
   }
 
   const mouseExit = (e) => {
@@ -157,6 +160,9 @@ function Cell({row, col, gameState, setGameState}) {
   }
 
 
+  
+  var shipLength = gameState.selectedShip.length;
+  var shipOrientation = gameState.selectedShip.orientation;
   var lengthString = "calc(" + (shipLength * 100) + "% + " + (2 * (shipLength - 1)) + "px)"
 
   return (
@@ -172,25 +178,28 @@ function Cell({row, col, gameState, setGameState}) {
       } */}
 
       {/* Ghost ship when placing */}
-      {(gameState.isSelected && col === gameState.selectedShip.position.x && row === gameState.selectedShip.position.y && gameState.board[row][col] === 0) &&
+      {(gameState.isSelected && col === gameState.selectedShip.position.x && row === gameState.selectedShip.position.y) &&
         <div
           className='Temp' 
           style={{
             width:  shipOrientation === "ver" ? '100%': lengthString,
-            height: shipOrientation === "ver" ? lengthString: "100%"
+            height: shipOrientation === "ver" ? lengthString: "100%",
+            backgroundColor: canPlaceShip() ? "green" : "red",
+            zIndex: 10,
           }}
         />
       }
 
       {/* Placed ships */}
       {gameState.ships.map((ship, i) => 
-        ((row === ship.position.x && col === ship.position.y) &&
+        ((col === ship.position.x && row === ship.position.y) &&
           <div
             key={i}
             className='Temp' 
             style={{
               width:  ship.orientation === "ver" ? '100%': "calc(" + (ship.length * 100) + "% + " + (2 * (ship.length - 1)) + "px)",
-              height: ship.orientation === "ver" ? "calc(" + (ship.length * 100) + "% + " + (2 * (ship.length - 1)) + "px)": "100%"
+              height: ship.orientation === "ver" ? "calc(" + (ship.length * 100) + "% + " + (2 * (ship.length - 1)) + "px)": "100%",
+              zIndex: 9,
             }}
           />
         )

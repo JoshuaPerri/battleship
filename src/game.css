@@ -18,6 +18,7 @@
   /* border: 1px solid #eeeeee; */
   border: 1px solid black;
   padding: 0;
+  display: grid;
   /* border: 0; */
   /* transition: linear 0.1s; */
 }
@@ -99,6 +100,9 @@
   pointer-events: none;
 
   opacity: 0.7;
+
+  grid-row: 1;
+  grid-column: 1;
 
   /* width: calc(100% - 20px);
   height: calc(100% - 20px);

@@ -91,6 +91,10 @@ function Cell({row, col, gameState, setGameState}) {
   var shipLength = gameState.selectedShip.length;
   var shipOrientation = gameState.selectedShip.orientation;
 
+
+
+
+
   var shiftFactor = Math.min(GRIDSIZE - ((shipOrientation === "ver" ? row: col) + shipLength), 0);
 
   const checkGrid = () => {
@@ -102,17 +106,39 @@ function Cell({row, col, gameState, setGameState}) {
 
   const mouseEnter = (e) => {
     if (gameState.isSelected) {
+
+      var length = gameState.selectedShip.length;
+      var orientation = gameState.selectedShip.orientation;
+  
+      var baseShift = -1 * (Math.ceil(length / 2) - 1);
+      var estPosition = {
+        x: (shipOrientation === "ver" ? col: col + baseShift),
+        y: (shipOrientation === "ver" ? row + baseShift : row)
+      }
+    
+      // If the ship would be out-of-bounds on the left or top
+      estPosition.x = Math.max(estPosition.x, 0);
+      estPosition.y = Math.max(estPosition.y, 0);
+  
+      // If the ship would be out-of-bounds on the bottom or right
+      if (orientation === "ver") {
+        estPosition.x = Math.min(GRIDSIZE, estPosition.x);
+        estPosition.y = Math.min(GRIDSIZE, estPosition.y + length) - length;
+      } else {
+        estPosition.x = Math.min(GRIDSIZE, estPosition.x + length) - length;
+        estPosition.y = Math.min(GRIDSIZE, estPosition.y);
+      }
+
       setGameState({
         ...gameState,
         selectedShip: {
           ...gameState.selectedShip,
-          position: {
-            x: row + (shipOrientation === "ver" ? shiftFactor: 0),
-            y: col + (shipOrientation === "ver" ? 0: shiftFactor),
-          }
+          position: estPosition
         }
       });
     }
+
+    
   }
 
   const mouseExit = (e) => {
@@ -146,7 +172,7 @@ function Cell({row, col, gameState, setGameState}) {
       } */}
 
       {/* Ghost ship when placing */}
-      {(gameState.isSelected && row === gameState.selectedShip.position.x && col === gameState.selectedShip.position.y && gameState.board[row][col] === 0) &&
+      {(gameState.isSelected && col === gameState.selectedShip.position.x && row === gameState.selectedShip.position.y && gameState.board[row][col] === 0) &&
         <div
           className='Temp' 
           style={{

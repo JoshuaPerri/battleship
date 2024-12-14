@@ -14,6 +14,40 @@ const GRIDSIZE = 10
 //   }
 // }
 
+
+
+function PlacedShip({ship}) {
+
+  return (
+    <div
+      className='PlacedShip' 
+      style={{
+        width:  ship.orientation === "ver" ? '100%': "calc(" + (ship.length * 100) + "% + " + (2 * (ship.length - 1)) + "px)",
+        height: ship.orientation === "ver" ? "calc(" + (ship.length * 100) + "% + " + (2 * (ship.length - 1)) + "px)": "100%",
+        backgroundColor: "orange",
+        zIndex: 1,
+      }}
+    />
+  )
+}
+
+function SelectedShip({ship, canPlaceShip}) {
+
+  var lengthString = "calc(" + (ship.length * 100) + "% + " + (2 * (ship.length - 1)) + "px)"
+
+  return (
+    <div
+      className='SelectedShip' 
+      style={{
+        width:  ship.orientation === "ver" ? '100%': lengthString,
+        height: ship.orientation === "ver" ? lengthString: "100%",
+        backgroundColor: canPlaceShip ? "green" : "red",
+        zIndex: 2,
+      }}
+    />
+  )
+}
+
 function Cell({row, col, gameState, setGameState}) {
   // const [hasToken, setHasToken] = useState(false)
 
@@ -117,8 +151,8 @@ function Cell({row, col, gameState, setGameState}) {
       // Shift to place ship so that cursor in the the middle
       var baseShift = -1 * (Math.ceil(length / 2) - 1);
       var adjPosition = {
-        x: (shipOrientation === "ver" ? col: col + baseShift),
-        y: (shipOrientation === "ver" ? row + baseShift : row)
+        x: (orientation === "ver" ? col: col + baseShift),
+        y: (orientation === "ver" ? row + baseShift : row)
       }
     
       // If the ship would be out-of-bounds on the left or top
@@ -159,12 +193,6 @@ function Cell({row, col, gameState, setGameState}) {
     }
   }
 
-
-  
-  var shipLength = gameState.selectedShip.length;
-  var shipOrientation = gameState.selectedShip.orientation;
-  var lengthString = "calc(" + (shipLength * 100) + "% + " + (2 * (shipLength - 1)) + "px)"
-
   return (
     <button 
       className="Cell" 
@@ -179,92 +207,36 @@ function Cell({row, col, gameState, setGameState}) {
 
       {/* Ghost ship when placing */}
       {(gameState.isSelected && col === gameState.selectedShip.position.x && row === gameState.selectedShip.position.y) &&
-        <div
-          className='Temp' 
-          style={{
-            width:  shipOrientation === "ver" ? '100%': lengthString,
-            height: shipOrientation === "ver" ? lengthString: "100%",
-            backgroundColor: canPlaceShip() ? "green" : "red",
-            zIndex: 10,
-          }}
-        />
+        <SelectedShip ship={gameState.selectedShip} canPlaceShip={canPlaceShip()}/>
+
       }
 
       {/* Placed ships */}
       {gameState.ships.map((ship, i) => 
         ((col === ship.position.x && row === ship.position.y) &&
-          <div
-            key={i}
-            className='Temp' 
-            style={{
-              width:  ship.orientation === "ver" ? '100%': "calc(" + (ship.length * 100) + "% + " + (2 * (ship.length - 1)) + "px)",
-              height: ship.orientation === "ver" ? "calc(" + (ship.length * 100) + "% + " + (2 * (ship.length - 1)) + "px)": "100%",
-              zIndex: 9,
-            }}
-          />
+          <PlacedShip key={i} ship={ship}/>
         )
       )}
-
     </button>
   )
 }
 
 function Table({gameState, setGameState}) {
   const list = []
-  for (let i = 0; i < 100; i++) {
+  for (let i = 0; i < GRIDSIZE * GRIDSIZE; i++) {
     list.push(i)
   }
 
-  const mouseMove = (e, isSelected) => {
-    // if (isSelected) {
-
-    //   let cell = Array.from(e.currentTarget.children).filter((child) => child.classList.contains("Cell"))[0];
-    //   let cellBox = cell.getBoundingClientRect();
-    //   let cellSize = {
-    //     l: cellBox.right - cellBox.left, 
-    //     w: cellBox.bottom - cellBox.top
-    //   }
-    //   console.log(cellSize)
-
-    //   var rect = e.currentTarget.getBoundingClientRect();
-    //   var mousePos = {
-    //     x: Math.ceil(e.clientX - rect.x), 
-    //     y: Math.ceil(e.clientY - rect.y)
-    //   };
-    //   var tableSize = {
-    //     l: rect.right - rect.left, 
-    //     w: rect.bottom - rect.top
-    //   };
-    //   var periodX = tableSize.l / GRIDSIZE;
-    //   var periodY = tableSize.w / GRIDSIZE;
-    //   var gridPos = {
-    //     x: Math.floor(mousePos.x / periodX), 
-    //     y: Math.floor(mousePos.y / periodY)
-    //   }
-
-    //   if (Object.is(gridPos.x, -0) || gridPos.x < 0 || gridPos.x >= GRIDSIZE) {
-    //     return
-    //   } else if (Object.is(gridPos.y, -0) || gridPos.y < 0 || gridPos.y >= GRIDSIZE) {
-    //     return
-    //   }
-
-    //   console.log(gridPos)
-    //   let temp = Array.from(e.currentTarget.children).filter((child) => child.classList.contains("Temp"))[0];
-    //   temp.style.left = (gridPos.x * periodX + rect.left) + "px";
-    //   temp.style.top = (gridPos.y * periodY + rect.top) + "px";
-    // }
-  }
-
   return (
-    <div className="Table" onMouseMove={(e) => mouseMove(e, gameState.isSelected)}>
+    <div className="Table">
       {list.map(i => 
-        <Cell key={i} row={(i - i % 10) / 10} col={i % 10} gameState={gameState} setGameState={setGameState}></Cell>
+        <Cell key={i} row={(i - i % GRIDSIZE) / GRIDSIZE} col={i % GRIDSIZE} gameState={gameState} setGameState={setGameState}></Cell>
       )}
     </div>
   );
 }
 
-function Boat({gameState, setGameState, length, orientation, index}) {
+function UnplacedShip({gameState, setGameState, length, orientation, index}) {
 
   const click = (e) => {
     if (gameState.isSelected && gameState.selectedShip.index === index) {
@@ -300,21 +272,14 @@ function Boat({gameState, setGameState, length, orientation, index}) {
 
   var lengthString = (100 * length) + "px"
 
-  // // Factor by which to shift the placing ship if it would otherwise be placed off the table
-  // var shiftFactorTop = props.row + shipLength - GRIDSIZE;
-  // var shiftStringTop  = "calc(-" + (100 * shiftFactorTop) + "% - " + (2 * shiftFactorTop) + "px)";
-
-  // var shiftFactorLeft = props.col + shipLength - GRIDSIZE;
-  // var shiftStringLeft  = "calc(-" + (100 * shiftFactorLeft) + "% - " + (2 * shiftFactorLeft) + "px)";
-
   return (
-    <div 
+    <div
+      className="UnplacedShip" 
       style={{
         height: orientation === "ver" ? lengthString: '100px',
         width:  orientation === "ver" ? '100px': lengthString,
         backgroundColor: (gameState.isSelected && gameState.selectedShip.index === index) ? "blue": "lightblue"
       }}
-      className="Boat" 
       onClick={(e) => click(e)}
     />
   );
@@ -389,7 +354,7 @@ function BoatSelectContianer({gameState, setGameState}) {
       <div className='BoatSelectHorizontal'>
         {gameState.ships.map((boat, index) =>
           (boat.orientation === "ver" && !boat.isPlaced) &&
-          <Boat
+          <UnplacedShip
             key={index}
             gameState={gameState} 
             setGameState={setGameState}
@@ -402,7 +367,7 @@ function BoatSelectContianer({gameState, setGameState}) {
       <div className='BoatSelectVertical'>
         {gameState.ships.map((boat, index) => 
           (boat.orientation === "hor" && !boat.isPlaced) &&
-          <Boat
+          <UnplacedShip
             key={index}
             gameState={gameState} 
             setGameState={setGameState}

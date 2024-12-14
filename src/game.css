@@ -79,7 +79,7 @@
 }
 
 
-.Boat {
+.UnplacedShip {
   background-color: lightblue;
   width: 100px;
   border: 1px solid blue;
@@ -87,27 +87,11 @@
   /* height: 200px; */
 }
 
-.Boat.selected {
-  background-color: blue;
-}
-
-.Temp {
+.PlacedShip, .SelectedShip {
   position: relative;
-  background-color: orange;
-  /* width: 100%;
-  height: calc(200% + 2px); */
 
   pointer-events: none;
 
-  opacity: 0.7;
-
   grid-row: 1;
   grid-column: 1;
-
-  /* width: calc(100% - 20px);
-  height: calc(100% - 20px);
-  margin: 10px;
-  border-radius: 100%;
-
-  background-color: orange; */
 }

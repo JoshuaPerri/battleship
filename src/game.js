@@ -329,22 +329,24 @@ function UnplacedShip({gameState, setGameState, length, orientation, index}) {
     }
   }
 
-  var lengthString = (100 * length) + "px"
+  var lengthString = (20 * length) + "%"
+  var colours = ["#fea3aa", "#f8b88b", "#faf884", "#baed91", "#b2cefe"];
+  var selectedColours = ["#fd3546", "#f48a3e", "#f7f43b", "#92e250", "#367ffc"];
 
   return (
     <div
       className="UnplacedShip" 
       style={{
-        height: orientation === "ver" ? lengthString: '100px',
-        width:  orientation === "ver" ? '100px': lengthString,
-        backgroundColor: (gameState.isSelected && gameState.selectedShip.index === index) ? "blue": "lightblue"
+        height: orientation === "ver" ? lengthString: '20%',
+        width:  orientation === "ver" ? '20%': lengthString,
+        backgroundColor: (gameState.isSelected && gameState.selectedShip.index === index) ? selectedColours[index] : colours[index]
       }}
       onClick={(e) => click(e)}
     />
   );
 }
 
-function BoatSelectContianer({gameState, setGameState}) {
+function BoatSelectContainer({gameState, setGameState}) {
 
   function rotate(e) {
     if (gameState.isSelected) {
@@ -445,11 +447,33 @@ function BoatSelectContianer({gameState, setGameState}) {
       )}
       </div>
 
-      <div style={{display: "flex", flexDirection: "column", justifyContent: "space-around"}}>
-        <button onClick={(e) => rotate(e)}>Rotate</button>
-        <button onClick={(e) => reset(e)}>Reset</button>
-        <button onClick={(e) => enter(e)}>Enter</button>
-      </div>
+      <button className='boat-rotate-button'
+        style={{
+                gridrow: "1 / 2",
+                gridcolumn: "2 / 3"
+              }}
+        onClick={(e) => rotate(e)}
+      > 
+        Rotate
+      </button>
+      <button className='boat-reset-button'
+        style={{
+                gridrow: "2 / 4",
+                gridcolumn: "2 / 3"
+              }}
+        onClick={(e) => reset(e)}
+      > 
+        Reset
+      </button>
+      <button className='boat-enter-button'
+        style={{
+                gridrow: "4 / 5",
+                gridcolumn: "2 / 3"
+              }}
+        onClick={(e) => enter(e)}
+      >
+        Enter
+      </button>
     </div>
   );
 }
@@ -522,11 +546,7 @@ function Game() {
 
   return (
     <div className='Game'>
-      <BoatSelectContianer 
-        gameState={gameState} 
-        setGameState={setGameState}
-      />
-      <div id="container">
+      <div id="table-container">
         {gameState.phase === "placing" ?
           <Table 
             gameState={gameState} 
@@ -540,6 +560,10 @@ function Game() {
         }
 
       </div>
+      <BoatSelectContainer 
+        gameState={gameState} 
+        setGameState={setGameState}
+      />
       <button onClick={(event) => click(event)}>Fire</button>
     </div>
   );

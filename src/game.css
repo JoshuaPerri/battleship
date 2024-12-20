@@ -42,10 +42,6 @@
   /* transition: linear 0.1s; */
 }
 
-/* .Cell:hover {
-  background-color: grey;
-} */
-
 .Token {
   width: calc(100% - 20px);
   height: calc(100% - 20px);
@@ -123,6 +119,20 @@
 .boat-reset-button {
   grid-row: 2 / 4;
   grid-column: 2 / 3;
+}
+
+.boat-enter-button {
+  grid-row: 4 / 5;
+  grid-column: 2 / 3;
+}
+
+.ShotContainer {
+  display: grid;
+  grid-template-columns: 80% 20%;
+  grid-template-rows: calc(100%/3) calc(50% - 100%/3) calc(50% - 100%/3) calc(100%/3);
+  background-color: darkcyan;
+
+  aspect-ratio: 1 / 1.6;
 }
 
 .boat-enter-button {

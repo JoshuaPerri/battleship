@@ -4,40 +4,17 @@ import './index.css';
 import Game from './game.js';
 import './game.css';
 import reportWebVitals from './reportWebVitals';
-import { useState } from 'react';
-
-function TestButton(props) {
-  const click = (e, props) => {
-    props.setState({
-      value: props.state.value + 1
-    })
-  }
-
-  return (
-    <button className="TestButton" onClick={(e) => click(e, props)}>
-      {props.state.value}
-    </button>
-  )
-}
-
-function Test() {
-  const [state, setState] = useState({
-    value: 0
-  })
-
-  return (
-    <div className='Test'>
-      <TestButton state={state} setState={setState}/>
-    </div>
-  );
-}
+import App from './App'
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
+
+//<React.StrictMode>
+//   <App/>
+//   {/* <Test/> */}
+//</React.StrictMode>
+
 root.render(
-  <React.StrictMode>
-    <Game/>
-    {/* <Test/> */}
-  </React.StrictMode>
+  <Game/>
 );
 
 // If you want to start measuring performance in your app, pass a function

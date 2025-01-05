@@ -1,0 +1,65 @@
+.ConnectionManager {
+  font-size: 20px;
+  width: 100%;
+  height: 100%;
+
+  box-sizing: border-box;
+
+  padding: 20px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgb(0 0 0 / 40%);
+
+  position: absolute;
+
+  left: 0px;
+  top: 0px;
+}
+
+.modal {
+  background-color: white;
+
+  width: 60%;
+  
+  padding: 50px;
+  box-sizing: border-box;
+
+  border: 1px solid gray;
+  border-radius: 5px;
+
+  display: flex;
+  flex-direction: column;
+
+}
+
+.id-input-group {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+
+  justify-content: center;
+  align-items: center;
+
+  margin: 20px;
+}
+
+.id-display {
+  font-size: 30px;
+}
+
+.id-input {
+  width: 100%;
+  padding: 5px;
+  box-sizing: border-box;
+}
+
+.id-submit-button {
+
+}
+
+.connection-header {
+  text-align: center;
+}

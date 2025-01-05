@@ -1,5 +1,6 @@
 import './game.css';
 import { useState } from 'react';
+import ConnectionManager from './components/ConnectionManager';
 
 const MAXSHOTS = 5
 const GRIDSIZE = 10
@@ -531,6 +532,14 @@ function ShotContainer({gameState, setGameState}) {
 
 function Game() {
 
+  const [conState, setConState] = useState({
+    peer: null,
+    con: null,
+    conID: "",
+    myID: "",
+    status: "disconnected",
+  });
+
   // Make empty board
   const board = []
   for (let i = 0; i < 10; i++) {
@@ -582,6 +591,10 @@ function Game() {
 
   return (
     <div className='Game'>
+      {conState.status !== "connected" &&
+        <ConnectionManager conState={conState} setConState={setConState}></ConnectionManager>
+      }
+
       <div id="table-container">
         {gameState.phase === "placing" ?
           <Table 

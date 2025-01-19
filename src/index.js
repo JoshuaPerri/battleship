@@ -4,7 +4,7 @@ import './index.css';
 import Game from './game.js';
 import './game.css';
 import reportWebVitals from './reportWebVitals';
-import App from './App'
+// import App from './App'
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 

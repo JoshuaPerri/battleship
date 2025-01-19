@@ -7,22 +7,31 @@ export default function ConnectionManager({conState, setConState}) {
   const conID = useRef("");
 
   useEffect(() => {
+
+    // Not connected to brokering server
     if (conState.peer === null) {
 
+      // Open connection to brokering server
       var peer = new Peer(Math.floor(Math.random() * 1000), {
         host: "localhost",
         port: 9000,
         path: "/",
       });
 
+      // Update state with connection
       setConState({
         ...conState,
         peer: peer,
       });
-    
+
+    // Connected to brokering server
     } else {
+      // Set up hooks for opening p2p connections
+
+      // When user connects to brokering server
       conState.peer.on('open', function(id) {
-  
+
+        // Save user id from brokering server
         setConState({
           ...conState,
           myID: id,
@@ -31,26 +40,38 @@ export default function ConnectionManager({conState, setConState}) {
         console.log("Connected to Server");
       });
 
+      // When an error occurs when connecting or after connection is opened
       conState.peer.on('error', function(e) {
         console.log(e.type);
       });
-    
+
+      // When a p2p connection is recieved
       conState.peer.on('connection', function(c) {
 
+        // =========================================================================
+        // Player num should be set with a different system, temporarily set sender to 0 and reciever to 1
         setConState({
           ...conState,
           con: c,
+          playerNum: 1, 
         });
 
         console.log("Connection Received");
       });
 
+      // p2p connection is open
       if (conState.con !== null) {
+
+        // When a p2p connection is opened (sending or recieving)
         conState.con.on("open", (e) => {
           setConState({
             ...conState,
             status: "waiting",
           });
+
+          console.log("Connection open", conState.playerNum);
+
+          // Wait so user can see that a connection has been established
           setTimeout(() => {
             setConState({
               ...conState,
@@ -58,7 +79,6 @@ export default function ConnectionManager({conState, setConState}) {
             });
             console.log("Timeout complete");
           }, 2000);
-          console.log("Connection open");
         });
       }
     }
@@ -66,12 +86,16 @@ export default function ConnectionManager({conState, setConState}) {
 
   function connect(e) {
 
+    // Attempt connection to user with id
     var con = conState.peer.connect(conID.current);
 
+    // =========================================================================
+    // Player num should be set with a different system, temporarily set sender to 0 and reciever to 1
     setConState({
       ...conState,
       con: con,
       conID: conID.current,
+      playerNum: 0,
     });
 
     console.log("Connection sent");

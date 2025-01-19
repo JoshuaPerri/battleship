@@ -1,5 +1,5 @@
 import './game.css';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import ConnectionManager from './components/ConnectionManager';
 
 const MAXSHOTS = 5
@@ -360,7 +360,9 @@ function UnplacedShip({gameState, setGameState, length, orientation, index}) {
   );
 }
 
-function BoatSelectContainer({gameState, setGameState}) {
+function BoatSelectContainer({gameState, setGameState, conState}) {
+
+  const oppWaiting = useRef(false);
 
   function rotate(e) {
     if (gameState.isSelected) {
@@ -422,15 +424,54 @@ function BoatSelectContainer({gameState, setGameState}) {
     
 
   function enter(e) {
-    setGameState({
-      ...gameState,
-      phase: "firing",
-      enemyBoard: gameState.playerBoard //Temporary for testing
-    });
+    if (oppWaiting.current === true) {
+      // Opponent is already done placing ships, start the game
+      // Tell opponent to start the game
+      conState.con.send({
+        type: "start-game",
+        info: {},
+      });
 
-    console.table(gameState.playerBoard);
+      // Start game here 
+      setGameState({
+        ...gameState,
+        phase: "firing",
+        enemyBoard: gameState.playerBoard //Temporary for testing
+      });
+  
+      console.table(gameState.playerBoard);
+
+    } else {
+      // Tell opponent that user is done placing ships
+      // Wait for opponent
+      conState.con.send({
+        type: "ships-placed",
+        info: {},
+      });
+    }
   }
 
+  useEffect(() => {
+    if (conState.con !== null) {
+      conState.con.on("data", (d) => {
+        if (d.type === "ships-placed") {
+          oppWaiting.current = true;
+          console.log("Other player waiting");
+          // Show some indication to user here
+
+        } else if (d.type === "start-game") {
+          // Other player is ready, now start game here
+          setGameState({
+            ...gameState,
+            phase: "firing",
+            enemyBoard: gameState.playerBoard //Temporary for testing
+          });
+      
+          console.table(gameState.playerBoard);
+        }
+      });
+    }
+  });
 
   return (
     <div className='BoatSelectContainer'>
@@ -538,6 +579,7 @@ function Game() {
     conID: "",
     myID: "",
     status: "disconnected",
+    playerNum: -1,
   });
 
   // Make empty board
@@ -596,7 +638,7 @@ function Game() {
       }
 
       <div id="table-container">
-        {gameState.phase === "placing" ?
+        {(gameState.phase === "placing" || (gameState.phase === "firing" && conState.playerNum !== gameState.playerTurn)) ?
           <Table 
             gameState={gameState} 
             setGameState={setGameState}
@@ -609,10 +651,11 @@ function Game() {
         }
 
       </div>
-      {gameState.phase === "placing" ?
+      {(gameState.phase === "placing" || (gameState.phase === "firing" && conState.playerNum !== gameState.playerTurn)) ?
         <BoatSelectContainer 
           gameState={gameState} 
           setGameState={setGameState}
+          conState={conState}
         />
       :
         <ShotContainer 

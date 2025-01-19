@@ -1,5 +1,0 @@
-
-
-function Lobby({gameState, setGameState}) {
-
-}

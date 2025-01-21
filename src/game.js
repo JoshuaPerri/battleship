@@ -206,47 +206,72 @@ function Table({gameState, setGameState}) {
 function EnemyCell({row, col, gameState, setGameState}) {
   const [hasToken, setHasToken] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const shotIndex = useRef(-1);
 
   const click = (e) => {
 
-    let newBoard = gameState.enemyBoard;
+    // Token placed on previous turn
+    if (gameState.enemyBoard[row][col] > 0) {
+      console.log("Can't remove this token", gameState.enemyBoard);
+    // Token placed on this turn
+    } else if (hasToken) {
 
-    // Check max shots
-    // if (!hasToken) {
-    if (gameState.enemyBoard[row][col] % 3 === 0) {
-      if (gameState.shotsRemaining > 0) {
-        newBoard[row][col] += 1;
+      if (gameState.shotsRemaining >= MAXSHOTS) {
+        console.log("You shouldn't see this, shots remaining can't exceed", MAXSHOTS);
+      } else {
+
+        // Free space in shot list to be overwritten
+        let updatedIndicies = gameState.freeShotIndicies;
+        updatedIndicies.push(shotIndex.current);
+        shotIndex.current = -1;
+
+        // Remove token from visual board
+        setHasToken(false);
+
+        // Increment and update shotsRemaining, shots list
+        setGameState({
+          ...gameState, 
+          shotsRemaining: gameState.shotsRemaining + 1,
+          freeShotIndicies: updatedIndicies,
+        });
+
+        console.log("Token removed");
+      }
+
+    // No token here
+    } else {
+
+      // Add token, decrement shotsremaining, add shot to list
+      if (gameState.shotsRemaining <= 0) {
+        console.log("No more shots remaining");
+      } else {
+    
+        // Save an index for storing the shot location at
+        let updatedIndicies = gameState.freeShotIndicies;
+        shotIndex.current = updatedIndicies.pop();
+
+        // Add shot to shot list
+        let newShots = gameState.shots;
+        newShots[shotIndex.current] = {
+          x: row,
+          y: col
+        };
+
+        // Add token to visual board
         setHasToken(true);
 
+        // Decrement and update shotsRemaining, shots list
         setGameState({
           ...gameState,
-          enemyBoard: newBoard,
-          shotsRemaining: gameState.shotsRemaining - 1
+          shotsRemaining: gameState.shotsRemaining - 1,
+          shots: newShots,
+          freeShotIndicies: updatedIndicies,
         });
-      } else {
-        console.log("No more shots remaining");
-      }
 
-    } else {
-      if (newBoard[row][col] % 3 === 1) {
-        if (gameState.shotsRemaining < MAXSHOTS) {
-
-          newBoard[row][col] -= 1;
-          setHasToken(false);
-        
-          setGameState({
-            ...gameState,
-            enemyBoard: newBoard,
-            shotsRemaining: gameState.shotsRemaining + 1
-          });
-        } else {
-          console.log("This shouldn't happen");
-        }
-      } else {
-        console.log("Can't remove that token");
+        console.log("Token added");
       }
-      
     }
+    console.log(gameState.shots);
   }
 
   const mouseEnter = (e) => {
@@ -435,8 +460,7 @@ function BoatSelectContainer({gameState, setGameState, conState}) {
       // Start game here 
       setGameState({
         ...gameState,
-        phase: "firing",
-        enemyBoard: gameState.playerBoard //Temporary for testing
+        phase: "firing"
       });
   
       console.table(gameState.playerBoard);
@@ -463,8 +487,7 @@ function BoatSelectContainer({gameState, setGameState, conState}) {
           // Other player is ready, now start game here
           setGameState({
             ...gameState,
-            phase: "firing",
-            enemyBoard: gameState.playerBoard //Temporary for testing
+            phase: "firing"
           });
       
           console.table(gameState.playerBoard);
@@ -537,14 +560,14 @@ function ShotContainer({gameState, setGameState}) {
       }
     }
 
-    let shipHits = new Array(NUMSHIPS).fill(0);
-    for (let i = 0; i < newBoard.length; i++) {
-      for (let j = 0; j < newBoard[i].length; j++) {
-        if (newBoard[i][j] % 3 === 2 && newBoard[i][j] > 2) {
-          shipHits[((newBoard[i][j] - 2) / 3) - 1] += 1;
-        }
-      }
-    }
+    // let shipHits = new Array(NUMSHIPS).fill(0);
+    // for (let i = 0; i < newBoard.length; i++) {
+    //   for (let j = 0; j < newBoard[i].length; j++) {
+    //     if (newBoard[i][j] % 3 === 2 && newBoard[i][j] > 2) {
+    //       shipHits[((newBoard[i][j] - 2) / 3) - 1] += 1;
+    //     }
+    //   }
+    // }
 
     setGameState({
       ...gameState,
@@ -553,7 +576,6 @@ function ShotContainer({gameState, setGameState}) {
     });
 
     console.table(gameState.enemyBoard);
-    
   }
 
   return (
@@ -585,11 +607,14 @@ function Game() {
   // Make empty board
   const board = []
   for (let i = 0; i < 10; i++) {
-    let row = []
-    for (let i = 0; i < 10; i++) {
-      row.push(0)
-    }
-    board.push(row)
+    let row = new Array(10).fill(0);
+    board.push(row);
+  }
+
+  const enemyBoard = []
+  for (let i = 0; i < 10; i++) {
+    let row = new Array(10).fill(0);
+    enemyBoard.push(row);
   }
 
   // Make ship list
@@ -606,6 +631,13 @@ function Game() {
       },
     }
     ships.push(ship);
+  }
+
+  let shots = [];
+  let freeShotIndicies = [];
+  for (let i = 0; i < NUMSHIPS; i++) {
+    shots.push({x: -1, y: -1});
+    freeShotIndicies.push(i);
   }
 
   const [gameState, setGameState] = useState({
@@ -627,7 +659,10 @@ function Game() {
       }
     },
 
-    enemyBoard: [],
+    shots: shots,
+    freeShotIndicies: freeShotIndicies,
+
+    enemyBoard: enemyBoard,
     sunkShips: [],
   });
 

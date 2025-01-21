@@ -547,35 +547,19 @@ function BoatSelectContainer({gameState, setGameState, conState}) {
   );
 }
 
-function ShotContainer({gameState, setGameState}) {
+function ShotContainer({gameState, setGameState, conState}) {
 
   function fire(e) {
 
-    let newBoard = gameState.enemyBoard;
-    for (let i = 0; i < newBoard.length; i++) {
-      for (let j = 0; j < newBoard[i].length; j++) {
-        if (newBoard[i][j] % 3 === 1) {
-          newBoard[i][j] += 1;
-        }
-      }
+    if (conState.con !== null) {
+      conState.con.send({
+        type: "check-hits",
+        info: gameState.shots,
+      });
+
+      console.log("Send check hits");
     }
 
-    // let shipHits = new Array(NUMSHIPS).fill(0);
-    // for (let i = 0; i < newBoard.length; i++) {
-    //   for (let j = 0; j < newBoard[i].length; j++) {
-    //     if (newBoard[i][j] % 3 === 2 && newBoard[i][j] > 2) {
-    //       shipHits[((newBoard[i][j] - 2) / 3) - 1] += 1;
-    //     }
-    //   }
-    // }
-
-    setGameState({
-      ...gameState,
-      enemyBoard: newBoard,
-      shotsRemaining: MAXSHOTS
-    });
-
-    console.table(gameState.enemyBoard);
   }
 
   return (
@@ -666,6 +650,64 @@ function Game() {
     sunkShips: [],
   });
 
+  useEffect(() => {
+    if (conState.con !== null) {
+      conState.con.on("data", (d) => {
+
+        // Check hits on 
+        if (d.type === "check-hits") {
+          
+          console.log("Recieve check hits");
+
+          let res = [];
+          d.info.forEach((e) => {
+            console.log(e);
+            gameState.playerBoard[e.x][e.y] >= 3 ? res.push("hit") : res.push("miss");
+          });
+
+          conState.con.send({
+            type: "return-hits",
+            info: res,
+          });
+        
+          console.log("Send return hits");
+
+        } else if (d.type === "return-hits") {
+
+          console.log("Recieve return hits");
+
+          let newBoard = gameState.enemyBoard;
+          d.info.forEach((e, i) => {
+            let pos = gameState.shots[i];
+            newBoard[pos.x][pos.y] = (e === "miss" ? 1 : 2);
+          });
+
+          // Reset list
+          let freeShotIndicies = [];
+          for (let i = 0; i < NUMSHIPS; i++) {
+            freeShotIndicies.push(i);
+          }
+      
+          setGameState({
+            ...gameState,
+            enemyBoard: newBoard,
+            shotsRemaining: MAXSHOTS,
+            freeShotIndicies: freeShotIndicies
+          });
+
+          console.log(gameState.enemyBoard);
+        }
+      });
+    }
+  });
+
+
+
+
+
+
+
+
   return (
     <div className='Game'>
       {conState.status !== "connected" &&
@@ -696,6 +738,7 @@ function Game() {
         <ShotContainer 
           gameState={gameState} 
           setGameState={setGameState}
+          conState={conState}
         />
       }
     </div>

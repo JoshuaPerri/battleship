@@ -37,7 +37,7 @@ function SelectedShip({ship, canPlaceShip}) {
   )
 }
 
-function Cell({row, col, gameState, setGameState}) {
+function Cell({cellPos, gameState, setGameState}) {
   // const [hasToken, setHasToken] = useState(false)
 
   const click = (e) => {
@@ -115,14 +115,14 @@ function Cell({row, col, gameState, setGameState}) {
 
       let length = gameState.selectedShip.length;
       let orientation = gameState.selectedShip.orientation;
-  
+
       // Shift to place ship so that cursor in the the middle
       let baseShift = -1 * (Math.ceil(length / 2) - 1);
       let adjPosition = {
-        x: (orientation === "ver" ? col: col + baseShift),
-        y: (orientation === "ver" ? row + baseShift : row)
+        x: (orientation === "ver" ? cellPos.x: cellPos.x + baseShift),
+        y: (orientation === "ver" ? cellPos.y + baseShift : cellPos.y)
       }
-    
+
       // If the ship would be out-of-bounds on the left or top
       adjPosition.x = Math.max(adjPosition.x, 0);
       adjPosition.y = Math.max(adjPosition.y, 0);
@@ -167,43 +167,56 @@ function Cell({row, col, gameState, setGameState}) {
       onClick={(event) => click(event)} 
       onMouseEnter={(e) => mouseEnter(e)} 
       onMouseOut={(e) => mouseExit(e)}
+      style={{position: "relative"}}
     >
-      {/* <div className='Token staged hidden' col={props.col} row={props.row}></div> */}
-      {/* {hasToken && 
-        <div className='Token staged' col={col} row={row}/>
-      } */}
 
       {/* Ghost ship when placing */}
-      {(gameState.isSelected && col === gameState.selectedShip.position.x && row === gameState.selectedShip.position.y) &&
+      {(gameState.isSelected && cellPos.x === gameState.selectedShip.position.x && cellPos.y === gameState.selectedShip.position.y) &&
         <SelectedShip ship={gameState.selectedShip} canPlaceShip={canPlaceShip()}/>
       }
 
       {/* Placed ships */}
       {gameState.ships.map((ship, i) => 
-        ((col === ship.position.x && row === ship.position.y) &&
+        ((cellPos.x === ship.position.x && cellPos.y === ship.position.y) &&
           <PlacedShip key={i} ship={ship}/>
         )
       )}
+
+      {/* Enemy tokens on your board */}
+      {gameState.playerBoard[cellPos.y][cellPos.x] % 3 !== 0 &&
+        <div
+          className='Token'
+          style={{
+            position: "absolute",
+            backgroundColor: "blue",
+            zIndex: 1
+          }}
+        />
+      }
     </button>
   )
 }
 
 function Table({gameState, setGameState}) {
-  const list = []
-  for (let i = 0; i < GRIDSIZE * GRIDSIZE; i++) {
-    list.push(i)
+  const rows = [];
+  const cols = [];
+  for (let i = 0; i < GRIDSIZE; i++) {
+    rows.push(i);
+    cols.push(i);
   }
 
   return (
     <div className="Table">
-      {list.map(i => 
-        <Cell key={i} row={(i - i % GRIDSIZE) / GRIDSIZE} col={i % GRIDSIZE} gameState={gameState} setGameState={setGameState}></Cell>
+      {rows.map(i => 
+        cols.map(j => 
+          <Cell key={GRIDSIZE * i + j} cellPos={{x: j, y: i}} gameState={gameState} setGameState={setGameState}></Cell>
+        )
       )}
     </div>
   );
 }
 
-function EnemyCell({row, col, gameState, setGameState}) {
+function EnemyCell({cellPos, gameState, setGameState}) {
   const [hasToken, setHasToken] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const shotIndex = useRef(-1);
@@ -211,7 +224,7 @@ function EnemyCell({row, col, gameState, setGameState}) {
   const click = (e) => {
 
     // Token placed on previous turn
-    if (gameState.enemyBoard[row][col] > 0) {
+    if (gameState.enemyBoard[cellPos.y][cellPos.x] > 0) {
       console.log("Can't remove this token", gameState.enemyBoard);
     // Token placed on this turn
     } else if (hasToken) {
@@ -252,10 +265,7 @@ function EnemyCell({row, col, gameState, setGameState}) {
 
         // Add shot to shot list
         let newShots = gameState.shots;
-        newShots[shotIndex.current] = {
-          x: row,
-          y: col
-        };
+        newShots[shotIndex.current] = cellPos;
 
         // Add token to visual board
         setHasToken(true);
@@ -291,43 +301,42 @@ function EnemyCell({row, col, gameState, setGameState}) {
 
       style={{cursor: "pointer"}}
     >
+
       {/* Ghost token to show where to place */}
       {isHovered &&
         <div 
-          className='Token' 
-          col={col} 
-          row={row}
+          className='Token'
           style={{backgroundColor: "orange"}}
         /> 
       }
 
       {!isHovered && hasToken &&
         <div 
-          className='Token' 
-          col={col} 
-          row={row}
+          className='Token'
           style={{
-            backgroundColor: 
-              (gameState.enemyBoard[row][col] % 3 === 2 && gameState.enemyBoard[row][col] > 2) ? "green" : 
-              (gameState.enemyBoard[row][col] % 3 === 2 && gameState.enemyBoard[row][col] <= 2) ? "red" : 
-              (gameState.enemyBoard[row][col] % 3 === 1) ? "yellow" : "blue"
+            backgroundColor: "blue"
           }}
         />
       }
+
     </button>
   )
 }
 
 function EnemyTable({gameState, setGameState}) {
-  const list = []
-  for (let i = 0; i < GRIDSIZE * GRIDSIZE; i++) {
-    list.push(i)
+  const rows = [];
+  const cols = [];
+  for (let i = 0; i < GRIDSIZE; i++) {
+    rows.push(i);
+    cols.push(i);
   }
 
   return (
     <div className="Table">
-      {list.map(i => 
-        <EnemyCell key={i} row={(i - i % GRIDSIZE) / GRIDSIZE} col={i % GRIDSIZE} gameState={gameState} setGameState={setGameState}></EnemyCell>
+      {rows.map(i => 
+        cols.map(j => 
+          <EnemyCell key={GRIDSIZE * i + j} cellPos={{x: j, y: i}} gameState={gameState} setGameState={setGameState}/>
+        )
       )}
     </div>
   );
@@ -420,13 +429,10 @@ function BoatSelectContainer({gameState, setGameState, conState}) {
       }
     }
 
-    let board = []
+    const board = []
     for (let i = 0; i < 10; i++) {
-      let row = []
-      for (let i = 0; i < 10; i++) {
-        row.push(0)
-      }
-      board.push(row)
+      let row = new Array(10).fill(0);
+      board.push(row);
     }
   
     setGameState({
@@ -565,7 +571,7 @@ function ShotContainer({gameState, setGameState, conState}) {
   return (
     <div className='ShotContainer'>
       {
-        [...Array(gameState.shotsRemaining)].map((x, i) => <div key={i} className='Token staged'></div>)
+        [...Array(gameState.shotsRemaining)].map((x, i) => <div key={i} className='token-inicator'></div>)
       }
       <button
         className='shot-fire-button'
@@ -650,19 +656,53 @@ function Game() {
     sunkShips: [],
   });
 
+  const temp = useRef("");
+
   useEffect(() => {
     if (conState.con !== null) {
       conState.con.on("data", (d) => {
+
+        // Sometimes data is sent multiple times, this will catch any duplicated data
+        if (temp.current === d.type) {
+          return;
+        } else {
+          temp.current = d.type;
+        }
 
         // Check hits on 
         if (d.type === "check-hits") {
           
           console.log("Recieve check hits");
 
-          let res = [];
-          d.info.forEach((e) => {
-            console.log(e);
-            gameState.playerBoard[e.x][e.y] >= 3 ? res.push("hit") : res.push("miss");
+          let newBoard = gameState.playerBoard;
+
+          let res = {
+            shots: [],
+            sinks: []
+          };
+          console.log(d.info);
+          d.info.forEach((el) => {
+            newBoard[el.y][el.x] >= 3 ? res.shots.push("hit") : res.shots.push("miss");
+            newBoard[el.y][el.x] += 1;
+          });
+
+
+          gameState.ships.forEach((el) => {
+            let isSunk = true;
+            for(let i = 0; i < el.length; i++) {
+              if (el.orientation === "hor") {
+                if (newBoard[el.position.y][el.position.x + i] % 3 === 0) {
+                  isSunk = false;
+                }
+              } else {
+                if (newBoard[el.position.y + i][el.position.x ] % 3 === 0) {
+                  isSunk = false;
+                }
+              }
+            }
+            if (isSunk) {
+              res.sinks.push(el);
+            }
           });
 
           conState.con.send({
@@ -670,16 +710,22 @@ function Game() {
             info: res,
           });
         
+          setGameState({
+            ...gameState,
+            playerBoard: newBoard
+          })
+
           console.log("Send return hits");
+          console.log(gameState.playerBoard);
 
         } else if (d.type === "return-hits") {
 
           console.log("Recieve return hits");
 
           let newBoard = gameState.enemyBoard;
-          d.info.forEach((e, i) => {
+          d.info.shots.forEach((e, i) => {
             let pos = gameState.shots[i];
-            newBoard[pos.x][pos.y] = (e === "miss" ? 1 : 2);
+            newBoard[pos.y][pos.x] = (e === "miss" ? 1 : 2);
           });
 
           // Reset list
@@ -700,12 +746,6 @@ function Game() {
       });
     }
   });
-
-
-
-
-
-
 
 
   return (

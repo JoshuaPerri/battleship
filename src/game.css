@@ -127,12 +127,18 @@
 }
 
 .ShotContainer {
-  display: grid;
-  grid-template-columns: 80% 20%;
-  grid-template-rows: calc(100%/3) calc(50% - 100%/3) calc(50% - 100%/3) calc(100%/3);
+  display: flex;
+  flex-direction: column;
   background-color: darkcyan;
 
   aspect-ratio: 1 / 1.6;
+}
+
+.token-inicator {
+  width: 100px;
+  height: 100px;
+  background-color: yellow;
+  border-radius: 100px;
 }
 
 .boat-enter-button {

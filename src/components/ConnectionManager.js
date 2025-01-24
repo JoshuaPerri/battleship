@@ -82,6 +82,22 @@ export default function ConnectionManager({conState, setConState}) {
         });
       }
     }
+
+    return () => {
+      if (conState.peer !== null) {
+
+        conState.peer.off("open");
+        conState.peer.off('error');
+        conState.peer.off('connection');
+
+      }
+      if (conState.con !== null) {
+
+        conState.con.off("open");
+
+      }
+    }
+
   }, [conState, setConState]);
 
   function connect(e) {

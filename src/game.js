@@ -6,51 +6,35 @@ const MAXSHOTS = 5
 const GRIDSIZE = 10
 const NUMSHIPS = 5
 
-function conSend(conState, setConState, type, data) {
+function conSend(conState, type, data) {
 
   // Ensure connection is open
   if (conState.con !== null) {
 
     conState.con.send({
       type: type,
-      id: conState.nextSendID,
       info: data,
     });
-
-    setConState({
-      ...conState,
-      nextSendID: conState.nextSendID + 1,
-    });
-
   }
 }
 
-function setConRecieve(conState, setConState, type, callback) {
+function setConRecieve(conState, type, callback) {
 
   // Ensure connection is open
   if (conState.con !== null) {
 
-    // Hook
+    // Recieve hook
     conState.con.on("data", (d) => {
 
       // Only consider data from sends of the correct type
       if (d.type === type) {
 
-        // Data can be recieved multiple times, suspect rerendering causes multiple recieves
-        // Give each send an id to prevent reruns of callback
-        if (d.id === conState.nextSendID) {
-
-          callback(d);
-
-          setConState({
-            ...conState,
-            nextSendID: conState.nextSendID + 1,
-          });
-        }
+        callback(d);
       }
     });
   }
 }
+
 
 function PlacedShip({ship}) {
   return (
@@ -234,8 +218,10 @@ function Cell({cellPos, gameState, setGameState}) {
           className='Token'
           style={{
             position: "absolute",
-            backgroundColor: "blue",
-            zIndex: 1
+            zIndex: 1,
+            backgroundColor:
+              (gameState.playerBoard[cellPos.y][cellPos.x] % 3 === 1) ? (gameState.playerBoard[cellPos.y][cellPos.x] >= 3) ?
+              "red" :  "white" : "blue"
           }}
         />
       }
@@ -361,8 +347,8 @@ function EnemyCell({cellPos, gameState, setGameState}) {
           className='Token'
           style={{
             backgroundColor: 
-              (gameState.enemyBoard[cellPos.y][cellPos.x] === 1) ? "red" : 
-              (gameState.enemyBoard[cellPos.y][cellPos.x] === 2) ? "green" : 
+              (gameState.enemyBoard[cellPos.y][cellPos.x] === 1) ? "white" : 
+              (gameState.enemyBoard[cellPos.y][cellPos.x] === 2) ? "red" : 
               "blue"
           }}
         />
@@ -605,9 +591,7 @@ function BoatSelectContainer({gameState, setGameState, conState}) {
 function ShotContainer({gameState, setGameState, conState, setConState}) {
 
   function fire(e) {
-
-    conSend(conState, setConState, "check-hits", gameState.shots);
-
+    conSend(conState, "check-hits", gameState.shots);
   }
 
   return (
@@ -702,77 +686,83 @@ function Game() {
     nextSendID: 0,
   });
 
+  const hooksSet = useRef(false);
 
-  setConRecieve(conState, setConState, "check-hits", (d) => {
+  if (!hooksSet.current && conState.con != null) {
+    setConRecieve(conState, "check-hits", (d) => {
 
-    let newBoard = gameState.playerBoard;
-
-    let res = {
-      shots: [],
-      sinks: []
-    };
-    console.log(d.info);
-    d.info.forEach((el) => {
-      newBoard[el.y][el.x] >= 3 ? res.shots.push("hit") : res.shots.push("miss");
-      newBoard[el.y][el.x] += 1;
-    });
-
-
-    gameState.ships.forEach((el) => {
-      let isSunk = true;
-      for(let i = 0; i < el.length; i++) {
-        if (el.orientation === "hor") {
-          if (newBoard[el.position.y][el.position.x + i] % 3 === 0) {
-            isSunk = false;
-          }
-        } else {
-          if (newBoard[el.position.y + i][el.position.x ] % 3 === 0) {
-            isSunk = false;
+      let newBoard = gameState.playerBoard;
+  
+      let res = {
+        shots: [],
+        sinks: []
+      };
+  
+      d.info.forEach((el) => {
+        newBoard[el.y][el.x] >= 3 ? res.shots.push("hit") : res.shots.push("miss");
+        newBoard[el.y][el.x] += 1;
+      });
+  
+  
+      gameState.ships.forEach((el) => {
+        let isSunk = true;
+        for(let i = 0; i < el.length; i++) {
+          if (el.orientation === "hor") {
+            if (newBoard[el.position.y][el.position.x + i] % 3 === 0) {
+              isSunk = false;
+            }
+          } else {
+            if (newBoard[el.position.y + i][el.position.x ] % 3 === 0) {
+              isSunk = false;
+            }
           }
         }
-      }
-      if (isSunk) {
-        res.sinks.push(el);
-      }
-    });
-
-    conState.con.send({
-      type: "return-hits",
-      id: gameState.nextSendID,
-      info: res,
+        if (isSunk) {
+          res.sinks.push(el);
+        }
+      });
+  
+      conState.con.send({
+        type: "return-hits",
+        id: gameState.nextSendID,
+        info: res,
+      });
+    
+      setGameState({
+        ...gameState,
+        playerBoard: newBoard
+      });
     });
   
-    setGameState({
-      ...gameState,
-      playerBoard: newBoard
-    });
-  });
-
-  setConRecieve(conState, setConState, "return-hits", (d) => {
-
-    let newBoard = gameState.enemyBoard;
-    d.info.shots.forEach((e, i) => {
-      let pos = gameState.shots[i];
-      newBoard[pos.y][pos.x] = (e === "miss" ? 1 : 2);
-    });
-
-    // Reset list
-    let freeShotIndicies = [];
-    for (let i = 0; i < NUMSHIPS; i++) {
-      freeShotIndicies.push(i);
-    }
-
-    setGameState({
-      ...gameState,
-      enemyBoard: newBoard,
-      shotsRemaining: MAXSHOTS,
-      freeShotIndicies: freeShotIndicies,
-      phase: "firing", // Don't know why this is necessary, but phase will be reset to "placing" otherwise
+    setConRecieve(conState, "return-hits", (d) => {
+  
+      let newBoard = gameState.enemyBoard;
+      d.info.shots.forEach((e, i) => {
+        let pos = gameState.shots[i];
+        newBoard[pos.y][pos.x] = (e === "miss" ? 1 : 2);
+      });
+  
+      // Reset list
+      let freeShotIndicies = [];
+      for (let i = 0; i < NUMSHIPS; i++) {
+        freeShotIndicies.push(i);
+      }
+  
+      setGameState({
+        ...gameState,
+        enemyBoard: newBoard,
+        shotsRemaining: MAXSHOTS,
+        freeShotIndicies: freeShotIndicies,
+        phase: "firing", // Don't know why this is necessary, but phase will be reset to "placing" otherwise
+      });
+  
     });
 
-  });
+    hooksSet.current = true;
+  }
+  
 
-
+  console.log(gameState);
   return (
     <div className='Game'>
       {conState.status !== "connected" &&

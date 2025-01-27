@@ -83,6 +83,7 @@ export default function ConnectionManager({conState, setConState}) {
       }
     }
 
+    // Clean up
     return () => {
       if (conState.peer !== null) {
 

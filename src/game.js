@@ -343,13 +343,13 @@ function EnemyCell({cellPos, gameState, setGameState}) {
       }
 
       {!isHovered && hasToken &&
-        <div 
+        <div
           className='Token'
           style={{
             backgroundColor: 
-              (gameState.enemyBoard[cellPos.y][cellPos.x] === 1) ? "white" : 
-              (gameState.enemyBoard[cellPos.y][cellPos.x] === 2) ? "red" : 
-              "blue"
+              (gameState.enemyBoard[cellPos.y][cellPos.x] === 1) ? "white" :
+              (gameState.enemyBoard[cellPos.y][cellPos.x] === 2) ? "red" :
+              "yellow"
           }}
         />
       }
@@ -596,13 +596,17 @@ function ShotContainer({gameState, setGameState, conState, setConState}) {
 
   return (
     <div className='ShotContainer'>
-      {
+      {gameState.playerTurn === conState.playerNum &&
         [...Array(gameState.shotsRemaining)].map((x, i) => <div key={i} className='token-inicator'></div>)
+      }
+      {gameState.playerTurn === conState.playerNum ? 
+        <Table gameState={gameState} setGameState={setGameState}/> : 
+        <EnemyTable gameState={gameState} setGameState={setGameState}/>
       }
       <button
         className='shot-fire-button'
         onClick={(e) => fire(e)}
-      > 
+      >
         Fire
       </button>
     </div>
@@ -621,146 +625,157 @@ function Game() {
     nextSendID: 0,
   });
 
-  // Make empty board
-  const board = []
-  for (let i = 0; i < 10; i++) {
-    let row = new Array(10).fill(0);
-    board.push(row);
-  }
-
-  const enemyBoard = []
-  for (let i = 0; i < 10; i++) {
-    let row = new Array(10).fill(0);
-    enemyBoard.push(row);
-  }
-
-  // Make ship list
-  const lengths = [2, 3, 3, 4, 5];
-  let ships = [];
-  for (let i = 0; i < lengths.length; i++) {
-    let ship = {
-      length: lengths[i],
-      orientation: "ver",
-      isPlaced: false,
-      position: {
-        x: -1,
-        y: -1,
-      },
+  const [gameState, setGameState] = useState(() => {
+    // Make empty board
+    const board = []
+    for (let i = 0; i < 10; i++) {
+      let row = new Array(10).fill(0);
+      board.push(row);
     }
-    ships.push(ship);
-  }
 
-  let shots = [];
-  let freeShotIndicies = [];
-  for (let i = 0; i < NUMSHIPS; i++) {
-    shots.push({x: -1, y: -1});
-    freeShotIndicies.push(i);
-  }
+    const enemyBoard = []
+    for (let i = 0; i < 10; i++) {
+      let row = new Array(10).fill(0);
+      enemyBoard.push(row);
+    }
 
-  const [gameState, setGameState] = useState({
-    phase: "placing",
-    playerTurn: 0,
-    shotsRemaining: 5,
-
-    playerBoard: board,
-    isSelected: false,
-    ships: ships,
-    selectedShip: {
-      length: 0,
-      orientation: "",
-      isPlaced: false,
-      index: -1,
-      position: {
-        x: -1,
-        y: -1,
+    // Make ship list
+    const lengths = [2, 3, 3, 4, 5];
+    let ships = [];
+    for (let i = 0; i < lengths.length; i++) {
+      let ship = {
+        length: lengths[i],
+        orientation: "ver",
+        isPlaced: false,
+        position: {
+          x: -1,
+          y: -1,
+        },
       }
-    },
+      ships.push(ship);
+    }
 
-    shots: shots,
-    freeShotIndicies: freeShotIndicies,
+    let shots = [];
+    let freeShotIndicies = [];
+    for (let i = 0; i < NUMSHIPS; i++) {
+      shots.push({x: -1, y: -1});
+      freeShotIndicies.push(i);
+    }
 
-    enemyBoard: enemyBoard,
-    sunkShips: [],
+    const state = {
+      phase: "placing",
+      playerTurn: 0,
+      shotsRemaining: 5,
 
+      playerBoard: board,
+      isSelected: false,
+      ships: ships,
+      selectedShip: {
+        length: 0,
+        orientation: "",
+        isPlaced: false,
+        index: -1,
+        position: {
+          x: -1,
+          y: -1,
+        }
+      },
 
-    nextSendID: 0,
+      shots: shots,
+      freeShotIndicies: freeShotIndicies,
+
+      enemyBoard: enemyBoard,
+      sunkShips: [],
+
+      nextSendID: 0,
+    }
+
+    return state;
   });
 
-  const hooksSet = useRef(false);
+  useEffect(() => {
+    if (conState.con != null) {
 
-  if (!hooksSet.current && conState.con != null) {
-    setConRecieve(conState, "check-hits", (d) => {
+      // Recieve data
+      conState.con.on("data", (d) => {
+  
+        if (d.type === "check-hits") {
+  
+          let newBoard = gameState.playerBoard;
+  
+          let res = {
+            shots: [],
+            sinks: []
+          };
+  
+          d.info.forEach((el) => {
+            newBoard[el.y][el.x] >= 3 ? res.shots.push("hit") : res.shots.push("miss");
+            newBoard[el.y][el.x] += 1;
+          });
+  
+          gameState.ships.forEach((el) => {
+            let isSunk = true;
+            for(let i = 0; i < el.length; i++) {
+              if (el.orientation === "hor") {
+                if (newBoard[el.position.y][el.position.x + i] % 3 === 0) {
+                  isSunk = false;
+                }
+              } else {
+                if (newBoard[el.position.y + i][el.position.x ] % 3 === 0) {
+                  isSunk = false;
+                }
+              }
+            }
+            if (isSunk) {
+              res.sinks.push(el);
+            }
+          });
+  
+          conState.con.send({
+            type: "return-hits",
+            id: gameState.nextSendID,
+            info: res,
+          });
 
-      let newBoard = gameState.playerBoard;
+          setGameState({
+            ...gameState,
+            playerBoard: newBoard,
+            playerTurn: (gameState.playerTurn + 1) % 2,
+          });
+
+        } else if (d.type === "return-hits") {
   
-      let res = {
-        shots: [],
-        sinks: []
-      };
-  
-      d.info.forEach((el) => {
-        newBoard[el.y][el.x] >= 3 ? res.shots.push("hit") : res.shots.push("miss");
-        newBoard[el.y][el.x] += 1;
-      });
-  
-  
-      gameState.ships.forEach((el) => {
-        let isSunk = true;
-        for(let i = 0; i < el.length; i++) {
-          if (el.orientation === "hor") {
-            if (newBoard[el.position.y][el.position.x + i] % 3 === 0) {
-              isSunk = false;
-            }
-          } else {
-            if (newBoard[el.position.y + i][el.position.x ] % 3 === 0) {
-              isSunk = false;
-            }
+          // Record results on board
+          let newBoard = gameState.enemyBoard;
+          d.info.shots.forEach((e, i) => {
+            let pos = gameState.shots[i];
+            newBoard[pos.y][pos.x] = (e === "miss" ? 1 : 2);
+          });
+      
+          // Reset list
+          let freeShotIndicies = [];
+          for (let i = 0; i < NUMSHIPS; i++) {
+            freeShotIndicies.push(i);
           }
-        }
-        if (isSunk) {
-          res.sinks.push(el);
-        }
-      });
-  
-      conState.con.send({
-        type: "return-hits",
-        id: gameState.nextSendID,
-        info: res,
-      });
-    
-      setGameState({
-        ...gameState,
-        playerBoard: newBoard
-      });
-    });
-  
-    setConRecieve(conState, "return-hits", (d) => {
-  
-      let newBoard = gameState.enemyBoard;
-      d.info.shots.forEach((e, i) => {
-        let pos = gameState.shots[i];
-        newBoard[pos.y][pos.x] = (e === "miss" ? 1 : 2);
-      });
-  
-      // Reset list
-      let freeShotIndicies = [];
-      for (let i = 0; i < NUMSHIPS; i++) {
-        freeShotIndicies.push(i);
-      }
-  
-      setGameState({
-        ...gameState,
-        enemyBoard: newBoard,
-        shotsRemaining: MAXSHOTS,
-        freeShotIndicies: freeShotIndicies,
-        phase: "firing", // Don't know why this is necessary, but phase will be reset to "placing" otherwise
-      });
-  
-    });
 
-    hooksSet.current = true;
-  }
-  
+          setGameState({
+            ...gameState,
+            enemyBoard: newBoard,
+            shotsRemaining: MAXSHOTS,
+            freeShotIndicies: freeShotIndicies,
+            playerTurn: (gameState.playerTurn + 1) % 2,
+          });
+        }
+      });
+    }
+
+    return () => {
+      if (conState.con != null) {
+        conState.con.off("data");
+      }
+    }
+  }, [gameState, conState.con]);
+
 
   console.log(gameState);
   return (
@@ -783,7 +798,7 @@ function Game() {
         }
 
       </div>
-      {(gameState.phase === "placing" || (gameState.phase === "firing" && conState.playerNum !== gameState.playerTurn)) ?
+      {(gameState.phase === "placing") ?
         <BoatSelectContainer 
           gameState={gameState} 
           setGameState={setGameState}

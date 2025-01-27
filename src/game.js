@@ -18,24 +18,6 @@ function conSend(conState, type, data) {
   }
 }
 
-function setConRecieve(conState, type, callback) {
-
-  // Ensure connection is open
-  if (conState.con !== null) {
-
-    // Recieve hook
-    conState.con.on("data", (d) => {
-
-      // Only consider data from sends of the correct type
-      if (d.type === type) {
-
-        callback(d);
-      }
-    });
-  }
-}
-
-
 function PlacedShip({ship}) {
   return (
     <div
@@ -67,8 +49,7 @@ function SelectedShip({ship, canPlaceShip}) {
   )
 }
 
-function Cell({cellPos, gameState, setGameState}) {
-  // const [hasToken, setHasToken] = useState(false)
+function PlayerCell({cellPos, gameState, setGameState}) {
 
   const click = (e) => {
     // Check if ship conflicts
@@ -229,25 +210,6 @@ function Cell({cellPos, gameState, setGameState}) {
   )
 }
 
-function Table({gameState, setGameState}) {
-  const rows = [];
-  const cols = [];
-  for (let i = 0; i < GRIDSIZE; i++) {
-    rows.push(i);
-    cols.push(i);
-  }
-
-  return (
-    <div className="Table">
-      {rows.map(i => 
-        cols.map(j => 
-          <Cell key={GRIDSIZE * i + j} cellPos={{x: j, y: i}} gameState={gameState} setGameState={setGameState}></Cell>
-        )
-      )}
-    </div>
-  );
-}
-
 function EnemyCell({cellPos, gameState, setGameState, enabled}) {
   const [isHovered, setIsHovered] = useState(false);
   const shotIndex = useRef(-1);
@@ -316,7 +278,6 @@ function EnemyCell({cellPos, gameState, setGameState, enabled}) {
         console.log("Token added");
       }
     }
-    console.log(gameState.shots);
   }
 
   const mouseEnter = (e) => {
@@ -373,7 +334,7 @@ function EnemyCell({cellPos, gameState, setGameState, enabled}) {
   )
 }
 
-function EnemyTable({gameState, setGameState, enabled}) {
+function Table({gameState, setGameState, enabled, type}) {
   const rows = [];
   const cols = [];
   for (let i = 0; i < GRIDSIZE; i++) {
@@ -385,13 +346,14 @@ function EnemyTable({gameState, setGameState, enabled}) {
     <div className="Table">
       {rows.map(i => 
         cols.map(j => 
-          <EnemyCell key={GRIDSIZE * i + j} cellPos={{x: j, y: i}} gameState={gameState} setGameState={setGameState} enabled={enabled}/>
+          type === "player" ? 
+            <PlayerCell key={GRIDSIZE * i + j} cellPos={{x: j, y: i}} gameState={gameState} setGameState={setGameState}/> :
+            <EnemyCell  key={GRIDSIZE * i + j} cellPos={{x: j, y: i}} gameState={gameState} setGameState={setGameState} enabled={enabled}/>
         )
       )}
     </div>
   );
 }
-
 
 function UnplacedShip({gameState, setGameState, length, orientation, index}) {
 
@@ -615,8 +577,8 @@ function ShotContainer({gameState, setGameState, conState, setConState}) {
         [...Array(gameState.shotsRemaining)].map((x, i) => <div key={i} className='token-inicator'></div>)
       }
       {gameState.playerTurn === conState.playerNum ? 
-        <Table gameState={gameState} setGameState={setGameState}/> : 
-        <EnemyTable gameState={gameState} setGameState={setGameState} enabled={false}/>
+        <Table gameState={gameState} setGameState={setGameState} enabled={false} type={"player"}/> : 
+        <Table gameState={gameState} setGameState={setGameState} enabled={false} type={"enemy"}/>
       }
       <button
         className='shot-fire-button'
@@ -807,12 +769,15 @@ function Game() {
           <Table 
             gameState={gameState} 
             setGameState={setGameState}
+            enabled={true}
+            type={"player"}
           />
         :
-          <EnemyTable 
+          <Table 
             gameState={gameState} 
             setGameState={setGameState}
             enabled={true}
+            type={"enemy"}
           />
         }
 

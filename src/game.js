@@ -248,18 +248,17 @@ function Table({gameState, setGameState}) {
   );
 }
 
-function EnemyCell({cellPos, gameState, setGameState}) {
-  const [hasToken, setHasToken] = useState(false);
+function EnemyCell({cellPos, gameState, setGameState, enabled}) {
   const [isHovered, setIsHovered] = useState(false);
   const shotIndex = useRef(-1);
 
   const click = (e) => {
 
     // Token placed on previous turn
-    if (gameState.enemyBoard[cellPos.y][cellPos.x] > 0) {
-      console.log("Can't remove this token", gameState.enemyBoard);
+    if (gameState.enemyBoard[cellPos.y][cellPos.x] > 1) {
+      console.log("Can't remove token", cellPos);
     // Token placed on this turn
-    } else if (hasToken) {
+    } else if (gameState.enemyBoard[cellPos.y][cellPos.x] > 0) {
 
       if (gameState.shotsRemaining >= MAXSHOTS) {
         console.log("You shouldn't see this, shots remaining can't exceed", MAXSHOTS);
@@ -271,13 +270,15 @@ function EnemyCell({cellPos, gameState, setGameState}) {
         shotIndex.current = -1;
 
         // Remove token from visual board
-        setHasToken(false);
+        let newBoard = gameState.enemyBoard;
+        newBoard[cellPos.y][cellPos.x] = 0;
 
         // Increment and update shotsRemaining, shots list
         setGameState({
           ...gameState, 
           shotsRemaining: gameState.shotsRemaining + 1,
           freeShotIndicies: updatedIndicies,
+          enemyBoard: newBoard,
         });
 
         console.log("Token removed");
@@ -300,7 +301,8 @@ function EnemyCell({cellPos, gameState, setGameState}) {
         newShots[shotIndex.current] = cellPos;
 
         // Add token to visual board
-        setHasToken(true);
+        let newBoard = gameState.enemyBoard;
+        newBoard[cellPos.y][cellPos.x] = 1;
 
         // Decrement and update shotsRemaining, shots list
         setGameState({
@@ -308,6 +310,7 @@ function EnemyCell({cellPos, gameState, setGameState}) {
           shotsRemaining: gameState.shotsRemaining - 1,
           shots: newShots,
           freeShotIndicies: updatedIndicies,
+          enemyBoard: newBoard,
         });
 
         console.log("Token added");
@@ -326,12 +329,12 @@ function EnemyCell({cellPos, gameState, setGameState}) {
 
   return (
     <button 
-      className="Cell" 
-      onClick={(event) => click(event)} 
-      onMouseEnter={(e) => mouseEnter(e)} 
-      onMouseOut={(e) => mouseExit(e)}
+      className="Cell"
+      onClick={(event) => enabled && click(event)} 
+      onMouseEnter={(e) => enabled && mouseEnter(e)} 
+      onMouseOut={(e) => enabled && mouseExit(e)}
 
-      style={{cursor: "pointer"}}
+      style={{cursor: enabled ? "pointer" : "unset"}}
     >
 
       {/* Ghost token to show where to place */}
@@ -342,14 +345,15 @@ function EnemyCell({cellPos, gameState, setGameState}) {
         /> 
       }
 
-      {!isHovered && hasToken &&
+      {!isHovered && gameState.enemyBoard[cellPos.y][cellPos.x] > 0 &&
         <div
           className='Token'
           style={{
             backgroundColor: 
-              (gameState.enemyBoard[cellPos.y][cellPos.x] === 1) ? "white" :
-              (gameState.enemyBoard[cellPos.y][cellPos.x] === 2) ? "red" :
-              "yellow"
+              (gameState.enemyBoard[cellPos.y][cellPos.x] === 1) ? "yellow" :
+              (gameState.enemyBoard[cellPos.y][cellPos.x] === 2) ? "white" :
+              (gameState.enemyBoard[cellPos.y][cellPos.x] === 3) ? "red" :
+              "blue"
           }}
         />
       }
@@ -358,7 +362,7 @@ function EnemyCell({cellPos, gameState, setGameState}) {
   )
 }
 
-function EnemyTable({gameState, setGameState}) {
+function EnemyTable({gameState, setGameState, enabled}) {
   const rows = [];
   const cols = [];
   for (let i = 0; i < GRIDSIZE; i++) {
@@ -370,7 +374,7 @@ function EnemyTable({gameState, setGameState}) {
     <div className="Table">
       {rows.map(i => 
         cols.map(j => 
-          <EnemyCell key={GRIDSIZE * i + j} cellPos={{x: j, y: i}} gameState={gameState} setGameState={setGameState}/>
+          <EnemyCell key={GRIDSIZE * i + j} cellPos={{x: j, y: i}} gameState={gameState} setGameState={setGameState} enabled={enabled}/>
         )
       )}
     </div>
@@ -601,7 +605,7 @@ function ShotContainer({gameState, setGameState, conState, setConState}) {
       }
       {gameState.playerTurn === conState.playerNum ? 
         <Table gameState={gameState} setGameState={setGameState}/> : 
-        <EnemyTable gameState={gameState} setGameState={setGameState}/>
+        <EnemyTable gameState={gameState} setGameState={setGameState} enabled={false}/>
       }
       <button
         className='shot-fire-button'
@@ -749,7 +753,7 @@ function Game() {
           let newBoard = gameState.enemyBoard;
           d.info.shots.forEach((e, i) => {
             let pos = gameState.shots[i];
-            newBoard[pos.y][pos.x] = (e === "miss" ? 1 : 2);
+            newBoard[pos.y][pos.x] = (e === "miss" ? 2 : 3);
           });
       
           // Reset list
@@ -794,6 +798,7 @@ function Game() {
           <EnemyTable 
             gameState={gameState} 
             setGameState={setGameState}
+            enabled={true}
           />
         }
 

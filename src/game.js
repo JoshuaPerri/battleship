@@ -334,8 +334,17 @@ function EnemyCell({cellPos, gameState, setGameState, enabled}) {
       onMouseEnter={(e) => enabled && mouseEnter(e)} 
       onMouseOut={(e) => enabled && mouseExit(e)}
 
-      style={{cursor: enabled ? "pointer" : "unset"}}
+      style={{
+        cursor: enabled ? "pointer" : "unset",
+        position: "relative"
+      }}
     >
+
+      {gameState.sunkShips.map((ship, i) => 
+        ((cellPos.x === ship.position.x && cellPos.y === ship.position.y) &&
+          <PlacedShip key={i} ship={ship}/>
+        )
+      )}
 
       {/* Ghost token to show where to place */}
       {isHovered &&
@@ -353,7 +362,9 @@ function EnemyCell({cellPos, gameState, setGameState, enabled}) {
               (gameState.enemyBoard[cellPos.y][cellPos.x] === 1) ? "yellow" :
               (gameState.enemyBoard[cellPos.y][cellPos.x] === 2) ? "white" :
               (gameState.enemyBoard[cellPos.y][cellPos.x] === 3) ? "red" :
-              "blue"
+              "blue",
+            position: "absolute",
+            zIndex: 1,
           }}
         />
       }
@@ -734,7 +745,7 @@ function Game() {
               res.sinks.push(el);
             }
           });
-  
+
           conState.con.send({
             type: "return-hits",
             id: gameState.nextSendID,
@@ -756,6 +767,8 @@ function Game() {
             newBoard[pos.y][pos.x] = (e === "miss" ? 2 : 3);
           });
       
+          let newSunkList = d.info.sinks;
+
           // Reset list
           let freeShotIndicies = [];
           for (let i = 0; i < NUMSHIPS; i++) {
@@ -768,6 +781,7 @@ function Game() {
             shotsRemaining: MAXSHOTS,
             freeShotIndicies: freeShotIndicies,
             playerTurn: (gameState.playerTurn + 1) % 2,
+            sunkShips: newSunkList,
           });
         }
       });

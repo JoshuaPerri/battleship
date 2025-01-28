@@ -12,11 +12,12 @@ export default function ConnectionManager({conState, setConState}) {
     if (conState.peer === null) {
 
       // Open connection to brokering server
-      var peer = new Peer(Math.floor(Math.random() * 1000), {
-        host: "localhost",
-        port: 9000,
-        path: "/",
-      });
+      // var peer = new Peer(Math.floor(Math.random() * 1000), {
+      //   host: "localhost",
+      //   port: 9000,
+      //   path: "/",
+      // });
+      var peer = new Peer();
 
       // Update state with connection
       setConState({

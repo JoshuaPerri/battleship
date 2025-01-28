@@ -9,55 +9,54 @@ function App() {
   // const peer = useRef(null);
   const [peer, setPeer] = useState(null);
   const [connectingID, setConnectingID] = useState('');
-  const [myID, setMyID] = useState('');
-  const [msg, setMSG] = useState('');
   const [conn, setConn] = useState(null);
 
+  const [data, setData] = useState(Math.floor(Math.random() * 1000));
+
   useEffect(() => {
+
     if (peer === null) {
+
       setPeer(new Peer(Math.floor(Math.random() * 1000), {
         host: "localhost",
         port: 9000,
         path: "/",
       }));
+
     } else {
-      peer.on('open', function(id) {
-        setMyID(id);
-      });
-    
+
       peer.on('connection', function(c) {
         setConn(c);
       });
     
       if (conn !== null) {
-        conn.on('open', function() {
-    
-          // Receive messages
-          conn.on('data', function(data) {
-            console.log(data);
-            setMSG(data.msg);
-          });
-
-          // Send messages
-          // conn.send({
-          //   msg: "Message",
-          //   id: myID,
-          // });
+        conn.on('data', function(data) {
+          console.log(data);
+          setData(data.msg);
         });
       }
     }
-  }, [peer, conn])
+
+    return () => {
+      if (peer !== null) {
+        peer.off("connection");
+      }
+      if (conn !== null) {
+        conn.off('open');
+        conn.off('data');
+      }
+    }
+  
+  }, [peer, conn, data]);
 
   function connect(e) {
-    console.log(connectingID)
     setConn(peer.connect(connectingID));
   }
 
   function send(e) {
     if (conn !== null) {
       conn.send({
-        msg: "Message",
-        id: myID,
+        msg: data,
       });
     }
   }
@@ -76,8 +75,8 @@ function App() {
       >
         Send
       </button>
-      <div>{msg}</div>
-      <div>My ID: {myID}</div>
+      <div>{data}</div>
+      <div>My ID: {peer?.id}</div>
     </div>
   );
 }

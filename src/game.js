@@ -295,6 +295,7 @@ function Game() {
 
     const state = {
       phase: "placing",
+      winner: -1,
       playerTurn: 0,
       shotsRemaining: 5,
 
@@ -399,6 +400,26 @@ function Game() {
             playerTurn: (gameState.playerTurn + 1) % 2,
             sunkShips: newSunkList,
           });
+
+          // If player has sunk all the ships, end the game
+          if (newSunkList.length === NUMSHIPS) {
+            conState.con.send({
+              type: "end-game",
+              info: {},
+            });
+
+            setGameState({
+              ...gameState,
+              winner: conState.playerNum,
+              phase: "end",
+            });
+          }
+        } else if (d.type === "end-game") {
+          setGameState({
+            ...gameState,
+            winner: (conState.playerNum + 1) % 2,
+            phase: "end",
+          });
         }
       });
     }
@@ -436,6 +457,53 @@ function Game() {
           conState={conState}
           setConState={setConState}
         />
+      }
+      {gameState.phase === "end" && 
+        <div
+          style={{
+            width: "100%",
+            height: "100%",
+          
+            boxSizing: "border-box",
+          
+            padding: "20px",
+          
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          
+            background: "rgb(0 0 0 / 40%)",
+          
+            position: "absolute",
+          
+            left: "0px",
+            top: "0px",
+          
+            zIndex: 2,
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "white",
+
+              width: "60%",
+              
+              padding: "50px",
+              boxSizing: "border-box",
+            
+              border: "1px solid gray",
+              borderRadius: "5px",
+            
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            {gameState.winner === conState.playerNum ?
+              <h1>You Win!</h1> :
+              <h1>You Lose...</h1>
+            }
+          </div>
+        </div>
       }
     </div>
   );

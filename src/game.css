@@ -30,44 +30,8 @@
   border: 1px solid black;
 }
 
-
-.Cell {
-  background-color: lightgray;
-  /* margin: 1px; */
-  /* border: 1px solid #eeeeee; */
-  border: 1px solid black;
-  padding: 0;
-  display: grid;
-  /* border: 0; */
-  /* transition: linear 0.1s; */
-}
-
-.Token {
-  width: calc(100% - 20px);
-  height: calc(100% - 20px);
-  margin: 10px;
-  border-radius: 100%;
-
-  pointer-events: none;
-}
-
 .hidden {
   display: none;
-}
-
-.staged {
-  background-color: yellow;
-  border: 2px solid #bbbb00;
-}
-
-.hit {
-  background-color: red;
-  border: 2px solid maroon;
-}
-
-.miss {
-  background-color: rgb(165, 165, 165);
-  border: 2px solid gray;
 }
 
 .BoatSelectContainer {
@@ -100,15 +64,6 @@
   width: 20%;
   cursor: pointer;
   /* height: 200px; */
-}
-
-.PlacedShip, .SelectedShip {
-  position: relative;
-
-  pointer-events: none;
-
-  grid-row: 1;
-  grid-column: 1;
 }
 
 .boat-rotate-button {

@@ -1,0 +1,12 @@
+.PlacedShip {
+  position: relative;
+
+  pointer-events: none;
+
+  background-color: orange;
+
+  grid-row: 1;
+  grid-column: 1;
+
+  z-index: 1
+}

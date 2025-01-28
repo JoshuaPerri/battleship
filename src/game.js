@@ -1,359 +1,11 @@
 import './game.css';
 import { useState, useRef, useEffect } from 'react';
 import ConnectionManager from './components/ConnectionManager';
+import Board from './components/Board'
 
 const MAXSHOTS = 5
 const GRIDSIZE = 10
 const NUMSHIPS = 5
-
-function conSend(conState, type, data) {
-
-  // Ensure connection is open
-  if (conState.con !== null) {
-
-    conState.con.send({
-      type: type,
-      info: data,
-    });
-  }
-}
-
-function PlacedShip({ship}) {
-  return (
-    <div
-      className='PlacedShip' 
-      style={{
-        width:  ship.orientation === "ver" ? '100%': "calc(" + (ship.length * 100) + "% + " + (2 * (ship.length - 1)) + "px)",
-        height: ship.orientation === "ver" ? "calc(" + (ship.length * 100) + "% + " + (2 * (ship.length - 1)) + "px)": "100%",
-        backgroundColor: "orange",
-        zIndex: 1,
-      }}
-    />
-  )
-}
-
-function SelectedShip({ship, canPlaceShip}) {
-
-  let lengthString = "calc(" + (ship.length * 100) + "% + " + (2 * (ship.length - 1)) + "px)"
-
-  return (
-    <div
-      className='SelectedShip' 
-      style={{
-        width:  ship.orientation === "ver" ? '100%': lengthString,
-        height: ship.orientation === "ver" ? lengthString: "100%",
-        backgroundColor: canPlaceShip ? "green" : "red",
-        zIndex: 2,
-      }}
-    />
-  )
-}
-
-function PlayerCell({cellPos, gameState, setGameState}) {
-
-  const click = (e) => {
-    // Check if ship conflicts
-    if (gameState.isSelected) {
-
-      if (!canPlaceShip()) {
-        console.log("Can't place ship here")
-        return;
-      }
-
-      let newShips = gameState.ships;
-      newShips[gameState.selectedShip.index].isPlaced = true;
-      newShips[gameState.selectedShip.index].position = gameState.selectedShip.position;
-
-
-      // Update board
-      // Remove previous placement of this ship
-      let newBoard = gameState.playerBoard;
-      for (let i = 0; i < newBoard.length; i++) {
-        for (let j = 0; j < newBoard[i].length; j++) {
-          if (newBoard[i][j] === (gameState.selectedShip.index + 1) * 3) {
-            newBoard[i][j] = 0;
-          }
-        }
-      }
-
-      // Add new placement of the ship
-      let position = gameState.selectedShip.position;
-      for (let i = 0; i < gameState.selectedShip.length; i++) {
-        if (gameState.selectedShip.orientation === "ver") {
-          // Multiply by three to help encode ships and tokens in the same board
-          newBoard[position.y + i][position.x] = (gameState.selectedShip.index + 1) * 3;
-        } else {
-          newBoard[position.y][position.x + i] = (gameState.selectedShip.index + 1) * 3;
-        }
-      }
-
-      setGameState({
-        ...gameState,
-        isSelected: false,
-        playerBoard: newBoard,
-        ships: newShips,
-        selectedShip: {
-          length: 0,
-          orientation: "",
-          index: -1,
-          position: {
-            x: -1,
-            y: -1,
-          }
-        }
-      });
-    }
-  }
-
-  function canPlaceShip() {
-    for (let i = 0; i < gameState.selectedShip.length; i++) {
-      if (gameState.selectedShip.orientation === "ver") {
-        if (gameState.playerBoard[gameState.selectedShip.position.y + i][gameState.selectedShip.position.x] !== 0) {
-          return false;
-        }
-      } else {
-        if (gameState.playerBoard[gameState.selectedShip.position.y][gameState.selectedShip.position.x + i] !== 0) {
-          return false;
-        }
-      }
-    }
-    return true;
-  }
-
-
-  const mouseEnter = (e) => {
-    if (gameState.isSelected) {
-
-      let length = gameState.selectedShip.length;
-      let orientation = gameState.selectedShip.orientation;
-
-      // Shift to place ship so that cursor in the the middle
-      let baseShift = -1 * (Math.ceil(length / 2) - 1);
-      let adjPosition = {
-        x: (orientation === "ver" ? cellPos.x: cellPos.x + baseShift),
-        y: (orientation === "ver" ? cellPos.y + baseShift : cellPos.y)
-      }
-
-      // If the ship would be out-of-bounds on the left or top
-      adjPosition.x = Math.max(adjPosition.x, 0);
-      adjPosition.y = Math.max(adjPosition.y, 0);
-  
-      // If the ship would be out-of-bounds on the bottom or right
-      if (orientation === "ver") {
-        adjPosition.x = Math.min(GRIDSIZE, adjPosition.x);
-        adjPosition.y = Math.min(GRIDSIZE, adjPosition.y + length) - length;
-      } else {
-        adjPosition.x = Math.min(GRIDSIZE, adjPosition.x + length) - length;
-        adjPosition.y = Math.min(GRIDSIZE, adjPosition.y);
-      }
-
-      setGameState({
-        ...gameState,
-        selectedShip: {
-          ...gameState.selectedShip,
-          position: adjPosition
-        }
-      });
-    }
-  }
-
-  const mouseExit = (e) => {
-    if (gameState.isSelected) {
-      setGameState({
-        ...gameState,
-        selectedShip: {
-          ...gameState.selectedShip,
-          position: {
-            x: -1,
-            y: -1,
-          }
-        }
-      });
-    }
-  }
-
-  return (
-    <button 
-      className="Cell" 
-      onClick={(event) => click(event)} 
-      onMouseEnter={(e) => mouseEnter(e)} 
-      onMouseOut={(e) => mouseExit(e)}
-      style={{position: "relative"}}
-    >
-
-      {/* Ghost ship when placing */}
-      {(gameState.isSelected && cellPos.x === gameState.selectedShip.position.x && cellPos.y === gameState.selectedShip.position.y) &&
-        <SelectedShip ship={gameState.selectedShip} canPlaceShip={canPlaceShip()}/>
-      }
-
-      {/* Placed ships */}
-      {gameState.ships.map((ship, i) => 
-        ((cellPos.x === ship.position.x && cellPos.y === ship.position.y) &&
-          <PlacedShip key={i} ship={ship}/>
-        )
-      )}
-
-      {/* Enemy tokens on your board */}
-      {gameState.playerBoard[cellPos.y][cellPos.x] % 3 !== 0 &&
-        <div
-          className='Token'
-          style={{
-            position: "absolute",
-            zIndex: 1,
-            backgroundColor:
-              (gameState.playerBoard[cellPos.y][cellPos.x] % 3 === 1) ? (gameState.playerBoard[cellPos.y][cellPos.x] >= 3) ?
-              "red" :  "white" : "blue"
-          }}
-        />
-      }
-    </button>
-  )
-}
-
-function EnemyCell({cellPos, gameState, setGameState, enabled}) {
-  const [isHovered, setIsHovered] = useState(false);
-  const shotIndex = useRef(-1);
-
-  const click = (e) => {
-
-    // Token placed on previous turn
-    if (gameState.enemyBoard[cellPos.y][cellPos.x] > 1) {
-      console.log("Can't remove token", cellPos);
-    // Token placed on this turn
-    } else if (gameState.enemyBoard[cellPos.y][cellPos.x] > 0) {
-
-      if (gameState.shotsRemaining >= MAXSHOTS) {
-        console.log("You shouldn't see this, shots remaining can't exceed", MAXSHOTS);
-      } else {
-
-        // Free space in shot list to be overwritten
-        let updatedIndicies = gameState.freeShotIndicies;
-        updatedIndicies.push(shotIndex.current);
-        shotIndex.current = -1;
-
-        // Remove token from visual board
-        let newBoard = gameState.enemyBoard;
-        newBoard[cellPos.y][cellPos.x] = 0;
-
-        // Increment and update shotsRemaining, shots list
-        setGameState({
-          ...gameState, 
-          shotsRemaining: gameState.shotsRemaining + 1,
-          freeShotIndicies: updatedIndicies,
-          enemyBoard: newBoard,
-        });
-
-        console.log("Token removed");
-      }
-
-    // No token here
-    } else {
-
-      // Add token, decrement shotsremaining, add shot to list
-      if (gameState.shotsRemaining <= 0) {
-        console.log("No more shots remaining");
-      } else {
-    
-        // Save an index for storing the shot location at
-        let updatedIndicies = gameState.freeShotIndicies;
-        shotIndex.current = updatedIndicies.pop();
-
-        // Add shot to shot list
-        let newShots = gameState.shots;
-        newShots[shotIndex.current] = cellPos;
-
-        // Add token to visual board
-        let newBoard = gameState.enemyBoard;
-        newBoard[cellPos.y][cellPos.x] = 1;
-
-        // Decrement and update shotsRemaining, shots list
-        setGameState({
-          ...gameState,
-          shotsRemaining: gameState.shotsRemaining - 1,
-          shots: newShots,
-          freeShotIndicies: updatedIndicies,
-          enemyBoard: newBoard,
-        });
-
-        console.log("Token added");
-      }
-    }
-  }
-
-  const mouseEnter = (e) => {
-    setIsHovered(true);
-  }
-
-  const mouseExit = (e) => {
-    setIsHovered(false);
-  }
-
-  return (
-    <button 
-      className="Cell"
-      onClick={(event) => enabled && click(event)} 
-      onMouseEnter={(e) => enabled && mouseEnter(e)} 
-      onMouseOut={(e) => enabled && mouseExit(e)}
-
-      style={{
-        cursor: enabled ? "pointer" : "unset",
-        position: "relative"
-      }}
-    >
-
-      {gameState.sunkShips.map((ship, i) => 
-        ((cellPos.x === ship.position.x && cellPos.y === ship.position.y) &&
-          <PlacedShip key={i} ship={ship}/>
-        )
-      )}
-
-      {/* Ghost token to show where to place */}
-      {isHovered &&
-        <div 
-          className='Token'
-          style={{backgroundColor: "orange"}}
-        /> 
-      }
-
-      {!isHovered && gameState.enemyBoard[cellPos.y][cellPos.x] > 0 &&
-        <div
-          className='Token'
-          style={{
-            backgroundColor: 
-              (gameState.enemyBoard[cellPos.y][cellPos.x] === 1) ? "yellow" :
-              (gameState.enemyBoard[cellPos.y][cellPos.x] === 2) ? "white" :
-              (gameState.enemyBoard[cellPos.y][cellPos.x] === 3) ? "red" :
-              "blue",
-            position: "absolute",
-            zIndex: 1,
-          }}
-        />
-      }
-
-    </button>
-  )
-}
-
-function Table({gameState, setGameState, enabled, type}) {
-  const rows = [];
-  const cols = [];
-  for (let i = 0; i < GRIDSIZE; i++) {
-    rows.push(i);
-    cols.push(i);
-  }
-
-  return (
-    <div className="Table">
-      {rows.map(i => 
-        cols.map(j => 
-          type === "player" ? 
-            <PlayerCell key={GRIDSIZE * i + j} cellPos={{x: j, y: i}} gameState={gameState} setGameState={setGameState}/> :
-            <EnemyCell  key={GRIDSIZE * i + j} cellPos={{x: j, y: i}} gameState={gameState} setGameState={setGameState} enabled={enabled}/>
-        )
-      )}
-    </div>
-  );
-}
 
 function UnplacedShip({gameState, setGameState, length, orientation, index}) {
 
@@ -480,8 +132,6 @@ function BoatSelectContainer({gameState, setGameState, conState}) {
         ...gameState,
         phase: "firing"
       });
-  
-      console.table(gameState.playerBoard);
 
     } else {
       // Tell opponent that user is done placing ships
@@ -507,8 +157,6 @@ function BoatSelectContainer({gameState, setGameState, conState}) {
             ...gameState,
             phase: "firing"
           });
-      
-          console.table(gameState.playerBoard);
         }
       });
     }
@@ -568,7 +216,13 @@ function BoatSelectContainer({gameState, setGameState, conState}) {
 function ShotContainer({gameState, setGameState, conState, setConState}) {
 
   function fire(e) {
-    conSend(conState, "check-hits", gameState.shots);
+    if (conState.con !== null) {
+
+      conState.con.send({
+        type: "check-hits",
+        info: gameState.shots,
+      });
+    }
   }
 
   return (
@@ -576,9 +230,9 @@ function ShotContainer({gameState, setGameState, conState, setConState}) {
       {gameState.playerTurn === conState.playerNum &&
         [...Array(gameState.shotsRemaining)].map((x, i) => <div key={i} className='token-inicator'></div>)
       }
-      {gameState.playerTurn === conState.playerNum ? 
-        <Table gameState={gameState} setGameState={setGameState} enabled={false} type={"player"}/> : 
-        <Table gameState={gameState} setGameState={setGameState} enabled={false} type={"enemy"}/>
+      {gameState.playerTurn === conState.playerNum ?
+        <Board gameState={gameState} setGameState={setGameState} enabled={false} type={"player"}/> : 
+        <Board gameState={gameState} setGameState={setGameState} enabled={false} type={"enemy"}/>
       }
       <button
         className='shot-fire-button'
@@ -756,8 +410,6 @@ function Game() {
     }
   }, [gameState, conState.con]);
 
-
-  console.log(gameState);
   return (
     <div className='Game'>
       {conState.status !== "connected" &&
@@ -766,19 +418,8 @@ function Game() {
 
       <div id="table-container">
         {(gameState.phase === "placing" || (gameState.phase === "firing" && conState.playerNum !== gameState.playerTurn)) ?
-          <Table 
-            gameState={gameState} 
-            setGameState={setGameState}
-            enabled={true}
-            type={"player"}
-          />
-        :
-          <Table 
-            gameState={gameState} 
-            setGameState={setGameState}
-            enabled={true}
-            type={"enemy"}
-          />
+          <Board gameState={gameState} setGameState={setGameState} enabled={true} type={"player"}/> :
+          <Board gameState={gameState} setGameState={setGameState} enabled={true} type={"enemy"}/>
         }
 
       </div>

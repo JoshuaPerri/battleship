@@ -227,9 +227,6 @@ function ShotContainer({gameState, setGameState, conState, setConState}) {
 
   return (
     <div className='ShotContainer'>
-      {gameState.playerTurn === conState.playerNum &&
-        [...Array(gameState.shotsRemaining)].map((x, i) => <div key={i} className='token-inicator'></div>)
-      }
       {gameState.playerTurn === conState.playerNum ?
         <Board gameState={gameState} setGameState={setGameState} enabled={false} type={"player"}/> : 
         <Board gameState={gameState} setGameState={setGameState} enabled={false} type={"enemy"}/>
@@ -240,6 +237,17 @@ function ShotContainer({gameState, setGameState, conState, setConState}) {
       >
         Fire
       </button>
+
+      <div
+        style={{
+          display:"flex",
+          flexDirection:"row",
+        }}
+      >
+        {gameState.playerTurn === conState.playerNum &&
+          [...Array(gameState.shotsRemaining)].map((x, i) => <div key={i} className='token-inicator'></div>)
+        }
+      </div>
     </div>
   );
 }

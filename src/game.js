@@ -436,9 +436,9 @@ function Game() {
   return (
     <div className='container'>
       <div className='Game'>
-        {/* {conState.status !== "connected" &&
+        {conState.status !== "connected" &&
           <ConnectionManager conState={conState} setConState={setConState}></ConnectionManager>
-        } */}
+        }
 
         <div id="table-container">
           {(gameState.phase === "placing" || (gameState.phase === "firing" && conState.playerNum !== gameState.playerTurn)) ?

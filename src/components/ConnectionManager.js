@@ -54,6 +54,7 @@ export default function ConnectionManager({conState, setConState}) {
         setConState({
           ...conState,
           con: c,
+          conID: c.peer,
           playerNum: 1, 
         });
 
@@ -119,6 +120,10 @@ export default function ConnectionManager({conState, setConState}) {
     console.log("Connection sent");
   }
 
+  function copy(e) {
+    navigator.clipboard.writeText(conState.myID);
+  }
+
   return (
     <div className='ConnectionManager'>
       <div className='modal'>
@@ -127,6 +132,7 @@ export default function ConnectionManager({conState, setConState}) {
 
           <div>Your connection ID is:</div>
           <div className='id-display'>{conState.myID}</div>
+          <button onClick={(e) => copy(e)}>Copy</button>
 
         </div>
         <div className='id-input-group'>

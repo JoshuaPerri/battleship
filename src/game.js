@@ -431,81 +431,86 @@ function Game() {
     }
   }, [gameState, conState.con]);
 
+  console.log(gameState);
+
   return (
-    <div className='Game'>
-      {conState.status !== "connected" &&
-        <ConnectionManager conState={conState} setConState={setConState}></ConnectionManager>
-      }
+    <div className='container'>
+      <div className='Game'>
+        {/* {conState.status !== "connected" &&
+          <ConnectionManager conState={conState} setConState={setConState}></ConnectionManager>
+        } */}
 
-      <div id="table-container">
-        {(gameState.phase === "placing" || (gameState.phase === "firing" && conState.playerNum !== gameState.playerTurn)) ?
-          <Board gameState={gameState} setGameState={setGameState} enabled={true} type={"player"}/> :
-          <Board gameState={gameState} setGameState={setGameState} enabled={true} type={"enemy"}/>
+        <div id="table-container">
+          {(gameState.phase === "placing" || (gameState.phase === "firing" && conState.playerNum !== gameState.playerTurn)) ?
+            <Board gameState={gameState} setGameState={setGameState} enabled={true} type={"player"}/> :
+            <Board gameState={gameState} setGameState={setGameState} enabled={true} type={"enemy"}/>
+          }
+
+        </div>
+        {(gameState.phase === "placing") ?
+          <BoatSelectContainer 
+            gameState={gameState} 
+            setGameState={setGameState}
+            conState={conState}
+          />
+        :
+          <ShotContainer 
+            gameState={gameState} 
+            setGameState={setGameState}
+            conState={conState}
+            setConState={setConState}
+          />
         }
-
-      </div>
-      {(gameState.phase === "placing") ?
-        <BoatSelectContainer 
-          gameState={gameState} 
-          setGameState={setGameState}
-          conState={conState}
-        />
-      :
-        <ShotContainer 
-          gameState={gameState} 
-          setGameState={setGameState}
-          conState={conState}
-          setConState={setConState}
-        />
-      }
-      {gameState.phase === "end" && 
-        <div
-          style={{
-            width: "100%",
-            height: "100%",
-          
-            boxSizing: "border-box",
-          
-            padding: "20px",
-          
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          
-            background: "rgb(0 0 0 / 40%)",
-          
-            position: "absolute",
-          
-            left: "0px",
-            top: "0px",
-          
-            zIndex: 2,
-          }}
-        >
+        {gameState.phase === "end" && 
           <div
             style={{
-              backgroundColor: "white",
-
-              width: "60%",
-              
-              padding: "50px",
+              width: "100%",
+              height: "100%",
+            
               boxSizing: "border-box",
             
-              border: "1px solid gray",
-              borderRadius: "5px",
+              padding: "20px",
             
               display: "flex",
-              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+            
+              background: "rgb(0 0 0 / 40%)",
+            
+              position: "absolute",
+            
+              left: "0px",
+              top: "0px",
+            
+              zIndex: 2,
             }}
           >
-            {gameState.winner === conState.playerNum ?
-              <h1>You Win!</h1> :
-              <h1>You Lose...</h1>
-            }
+            <div
+              style={{
+                backgroundColor: "white",
+
+                width: "60%",
+                
+                padding: "50px",
+                boxSizing: "border-box",
+              
+                border: "1px solid gray",
+                borderRadius: "5px",
+              
+                display: "flex",
+                flexDirection: "column",
+              }}
+            >
+              {gameState.winner === conState.playerNum ?
+                <h1>You Win!</h1> :
+                <h1>You Lose...</h1>
+              }
+            </div>
           </div>
-        </div>
-      }
+        }
+      </div>
     </div>
+    
   );
 }
 

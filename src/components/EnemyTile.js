@@ -1,6 +1,6 @@
 import '../styles/EnemyTile.css'
 
-import PlacedShip from "./PlacedShip";
+import Ship from "./Ship";
 import {useState, useRef} from 'react';
 
 const MAXSHOTS = 5;
@@ -97,7 +97,7 @@ export default function EnemyTile({gameState, setGameState, tilePos, enabled}) {
 
       {gameState.sunkShips.map((ship, i) => 
         ((tilePos.x === ship.position.x && tilePos.y === ship.position.y) &&
-          <PlacedShip key={i} ship={ship}/>
+          <Ship key={i} ship={ship} gap={2} padding={2} color={"purple"} zIndex={2}/>
         )
       )}
 

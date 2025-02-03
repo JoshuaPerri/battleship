@@ -1,7 +1,7 @@
 .EnemyTile {
   background-color: lightgray;
   border: 1px solid black;
-  padding: 0;
+  padding: 2px;
   display: grid;
   position: relative;
 }

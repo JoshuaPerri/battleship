@@ -1,7 +1,6 @@
 import '../styles/PlayerTile.css';
 
-import HoveredShip from "./HoveredShip";
-import PlacedShip from "./PlacedShip";
+import Ship from "./Ship";
 
 const GRIDSIZE = 10;
 
@@ -180,13 +179,13 @@ export default function PlayerTile({gameState, setGameState, tilePos}) {
 
       {/* Ghost ship when placing */}
       {(gameState.isSelected && tilePos.x === gameState.selectedShip.position.x && tilePos.y === gameState.selectedShip.position.y) &&
-        <HoveredShip ship={gameState.selectedShip} canPlaceShip={canPlaceShip()}/>
+        <Ship ship={gameState.selectedShip} gap={2} padding={2} color={canPlaceShip() ? "green" : "red"} zIndex={3}/>
       }
 
       {/* Placed ships */}
       {gameState.ships.map((ship, i) => 
         ((tilePos.x === ship.position.x && tilePos.y === ship.position.y) &&
-          <PlacedShip key={i} ship={ship}/>
+          <Ship key={i} ship={ship} gap={2} padding={2} color={"#444444"} zIndex={2}/>
         )
       )}
 

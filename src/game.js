@@ -227,10 +227,14 @@ function ShotContainer({gameState, setGameState, conState, setConState}) {
 
   return (
     <div className='ShotContainer'>
-      {gameState.playerTurn === conState.playerNum ?
-        <Board gameState={gameState} setGameState={setGameState} enabled={false} type={"player"}/> : 
-        <Board gameState={gameState} setGameState={setGameState} enabled={false} type={"enemy"}/>
-      }
+
+      <Board 
+        gameState={gameState} 
+        setGameState={setGameState} 
+        enabled={false} 
+        type={gameState.playerTurn === conState.playerNum ? "player" : "enemy"}
+      />
+
       <button
         className='shot-fire-button'
         onClick={(e) => fire(e)}

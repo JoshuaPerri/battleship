@@ -8,6 +8,7 @@
 
 .Game {
   display: grid;
+  grid-template-rows: 50px 1fr;
   grid-template-columns: 60% 40%;
   max-width: 1400px;
   width: 100%;
@@ -15,6 +16,17 @@
   align-content: center;
 }
 
+.InfoBar {
+  display: flex;
+  background-color: purple;
+  height: 100%;
+  padding: 10px;
+  justify-content: space-between;
+}
+
+p {
+  margin: 0px;
+}
 
 .Table {
   max-width: 900px;

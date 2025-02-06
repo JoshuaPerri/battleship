@@ -5,6 +5,7 @@ import { useRef, useEffect } from "react"
 export default function ConnectionManager({conState, setConState}) {
 
   const conID = useRef("");
+  const displayName = useRef("");
 
   useEffect(() => {
 
@@ -138,7 +139,15 @@ export default function ConnectionManager({conState, setConState}) {
         <div className='id-input-group'>
           <input
             className='id-input'
+            onChange={(e) => {displayName.current = e.currentTarget.value}}
+            placeholder='Enter your display name'
+          />
+        </div>
+        <div className='id-input-group'>
+          <input
+            className='id-input'
             onChange={(e) => {conID.current = e.currentTarget.value}}
+            placeholder="Enter your opponent's ID"
           />
           <button
             className='id-submit-button'

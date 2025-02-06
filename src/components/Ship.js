@@ -12,6 +12,7 @@ export default function Ship({ship, gap, padding, color, zIndex}) {
         backgroundColor: color,
         zIndex: zIndex,
         borderRadius: ship.orientation === "ver" ? "50% / 50px" : "50px / 50%",
+        pointerEvents: "none"
       }}
     />
   );

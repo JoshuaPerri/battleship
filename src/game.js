@@ -256,6 +256,20 @@ function ShotContainer({gameState, setGameState, conState, setConState}) {
   );
 }
 
+function InfoBar({gameState, conState}) {
+  return(
+    <div className='InfoBar'>
+      {
+        conState.playerNum === -1 ? <p>Connect to an opponent</p> :
+        gameState.phase === "placing" ? <p>Place your ships</p> :
+        gameState.playerTurn === conState.playerNum ? <p style={{margin:"0px"}}>It's your turn</p> :
+        <p style={{margin:"0px"}}>It's your opponent's turn</p>
+      }
+      <p>{conState.conID}</p>
+    </div>
+  )
+}
+
 function Game() {
 
   const [conState, setConState] = useState({
@@ -448,6 +462,10 @@ function Game() {
   return (
     <div className='container'>
       <div className='Game'>
+        <div style={{gridColumn:"1/3"}}>
+          <InfoBar gameState={gameState} conState={conState}/>
+        </div>
+
         {conState.status !== "connected" &&
           <ConnectionManager conState={conState} setConState={setConState}></ConnectionManager>
         }

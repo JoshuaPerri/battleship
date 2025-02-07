@@ -3,6 +3,11 @@ import { useState, useRef, useEffect } from 'react';
 import ConnectionManager from './components/ConnectionManager';
 import Board from './components/Board'
 
+import setPlayerData from './events/setPlayerData';
+import checkHits from './events/checkHits';
+import returnHits from './events/returnHits';
+import endGame from './events/endGame';
+
 const MAXSHOTS = 5
 const GRIDSIZE = 10
 const NUMSHIPS = 5
@@ -265,7 +270,7 @@ function InfoBar({gameState, conState}) {
         gameState.playerTurn === conState.playerNum ? <p style={{margin:"0px"}}>It's your turn</p> :
         <p style={{margin:"0px"}}>It's your opponent's turn</p>
       }
-      <p>{conState.conID}</p>
+      <p>{gameState.enemyName} {gameState.enemyColour}</p>
     </div>
   )
 }
@@ -343,6 +348,8 @@ function Game() {
       freeShotIndicies: freeShotIndicies,
 
       enemyBoard: enemyBoard,
+      enemyName: "default",
+      enemyColour: "#000000",
       sunkShips: [],
 
       nextSendID: 0,
@@ -354,100 +361,13 @@ function Game() {
   useEffect(() => {
     if (conState.con != null) {
 
-      // Recieve data
       conState.con.on("data", (d) => {
-  
-        if (d.type === "check-hits") {
-  
-          let newBoard = gameState.playerBoard;
-  
-          let res = {
-            shots: [],
-            sinks: []
-          };
-  
-          d.info.forEach((el) => {
-            newBoard[el.y][el.x] >= 3 ? res.shots.push("hit") : res.shots.push("miss");
-            newBoard[el.y][el.x] += 1;
-          });
-  
-          gameState.ships.forEach((el) => {
-            let isSunk = true;
-            for(let i = 0; i < el.length; i++) {
-              if (el.orientation === "hor") {
-                if (newBoard[el.position.y][el.position.x + i] % 3 === 0) {
-                  isSunk = false;
-                }
-              } else {
-                if (newBoard[el.position.y + i][el.position.x ] % 3 === 0) {
-                  isSunk = false;
-                }
-              }
-            }
-            if (isSunk) {
-              res.sinks.push(el);
-            }
-          });
-
-          conState.con.send({
-            type: "return-hits",
-            id: gameState.nextSendID,
-            info: res,
-          });
-
-          setGameState({
-            ...gameState,
-            playerBoard: newBoard,
-            playerTurn: (gameState.playerTurn + 1) % 2,
-          });
-
-        } else if (d.type === "return-hits") {
-  
-          // Record results on board
-          let newBoard = gameState.enemyBoard;
-          d.info.shots.forEach((e, i) => {
-            let pos = gameState.shots[i];
-            newBoard[pos.y][pos.x] = (e === "miss" ? 2 : 3);
-          });
-      
-          let newSunkList = d.info.sinks;
-
-          // Reset list
-          let freeShotIndicies = [];
-          for (let i = 0; i < NUMSHIPS; i++) {
-            freeShotIndicies.push(i);
-          }
-
-          setGameState({
-            ...gameState,
-            enemyBoard: newBoard,
-            shotsRemaining: MAXSHOTS,
-            freeShotIndicies: freeShotIndicies,
-            playerTurn: (gameState.playerTurn + 1) % 2,
-            sunkShips: newSunkList,
-          });
-
-          // If player has sunk all the ships, end the game
-          if (newSunkList.length === NUMSHIPS) {
-            conState.con.send({
-              type: "end-game",
-              info: {},
-            });
-
-            setGameState({
-              ...gameState,
-              winner: conState.playerNum,
-              phase: "end",
-            });
-          }
-        } else if (d.type === "end-game") {
-          setGameState({
-            ...gameState,
-            winner: (conState.playerNum + 1) % 2,
-            phase: "end",
-          });
-        }
+        setPlayerData(d, gameState, setGameState);
+        checkHits(d, gameState, setGameState, conState);
+        returnHits(d, gameState, setGameState, conState);
+        endGame(d, gameState, setGameState, conState);
       });
+
     }
 
     return () => {

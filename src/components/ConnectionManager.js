@@ -5,7 +5,8 @@ import { useRef, useEffect } from "react"
 export default function ConnectionManager({conState, setConState}) {
 
   const conID = useRef("");
-  const displayName = useRef("");
+  const playerName = useRef("");
+  const playerColour = useRef("#000000");
 
   useEffect(() => {
 
@@ -71,6 +72,16 @@ export default function ConnectionManager({conState, setConState}) {
             ...conState,
             status: "waiting",
           });
+
+          conState.con.send(
+            {
+              type: "set-player-data",
+              data: {
+                playerName: playerName.current,
+                playerColour: playerColour.current,
+              }
+            }
+          );
 
           console.log("Connection open", conState.playerNum);
 
@@ -139,8 +150,13 @@ export default function ConnectionManager({conState, setConState}) {
         <div className='id-input-group'>
           <input
             className='id-input'
-            onChange={(e) => {displayName.current = e.currentTarget.value}}
+            onChange={(e) => {playerName.current = e.currentTarget.value}}
             placeholder='Enter your display name'
+          />
+          <input
+            className='colour-input'
+            type='color'
+            onChange={(e) => {playerColour.current = e.currentTarget.value}}
           />
         </div>
         <div className='id-input-group'>
